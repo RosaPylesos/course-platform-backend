@@ -1,0 +1,54 @@
+import uuid
+from sqlalchemy import String, Enum as SQLAlchemyEnum
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.models.base import Base, TimestampMixin
+from app.models.enums import UserRole
+
+class User(Base, TimestampMixin):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+    )
+
+    surname: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+    )
+
+    email: Mapped[str] = mapped_column(
+        String(128),
+        unique=True,
+        nullable=False,
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        nullable=False
+    )
+
+    role: Mapped[UserRole] = mapped_column(
+        SQLAlchemyEnum(
+            UserRole, 
+            name="user_role"
+        ),
+        default=UserRole.STUDENT,
+        nullable=False,
+    )
+
+    # UUID id
+    # String(64) name PK
+    # String(64) surname NULLABLE
+    # String(128) email
+    # Text password_hash
+    # ENUM role
+    # Timezone created_at
+    # Timezone updated_at
+
+    # UNIQUE(email)

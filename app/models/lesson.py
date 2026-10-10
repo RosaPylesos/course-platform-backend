@@ -1,0 +1,76 @@
+import uuid
+
+from sqlalchemy import (
+    ForeignKey, 
+    String, 
+    Text, 
+    Integer, 
+    JSON, 
+    UniqueConstraint,
+    CheckConstraint
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.models.base import Base, TimestampMixin
+
+class Lesson(Base, TimestampMixin):
+    __tablename__ = "lessons"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    course_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey(
+            "courses.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+    )
+
+    description: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    content: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+    )
+
+    position: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "course_id",
+            "position",
+            name="uq_lessons_course_position",
+        ),
+        CheckConstraint(
+            "position >= 0",
+            name="ck_lessons_position_non_negative",
+        ),
+    )
+
+    # UUID id PK
+    # UUID course_id FK
+    # String(64) name
+    # Text description NULLABLE
+    # JSONB content NULLABLE?
+    # int position
+    # Timezone created_at
+    # Timezone updated_at
+
+    # UNIQUE(course_id, position)
+    # CHECK(position >= 0)

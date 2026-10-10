@@ -39,4 +39,10 @@ alembic upgrade head
 ```
 This command will automatically upgrade your DB
 schema and add all of necessary tables to it for
-proper work.
+proper work. If you need to check your migration
+status, try using "current" command:
+```bash
+alembic current
+```
+It will show whether your migration is on head or
+not.
