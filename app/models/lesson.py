@@ -4,13 +4,12 @@ from sqlalchemy import (
     ForeignKey, 
     String, 
     Text, 
-    Integer, 
-    JSON, 
+    Integer,
     UniqueConstraint,
     CheckConstraint
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
 
@@ -58,9 +57,17 @@ class Lesson(Base, TimestampMixin):
             name="uq_lessons_course_position",
         ),
         CheckConstraint(
-            "position >= 0",
+            "position >= 1",
             name="ck_lessons_position_non_negative",
         ),
+    )
+
+    course: Mapped["Course"] = relationship(
+        back_populates="lessons",
+    )
+
+    lesson_progress: Mapped[list["LessonProgress"]] = relationship(
+        back_populates="lesson",
     )
 
     # UUID id PK

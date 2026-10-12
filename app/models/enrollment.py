@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import ForeignKey, Enum as SQLAlchemyEnum, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
 from app.models.enums import EnrollmentStatus
@@ -47,6 +47,17 @@ class Enrollment(Base, TimestampMixin):
         ),
     )
 
+    user: Mapped["User"] = relationship(
+        back_populates="enrollments",
+    )
+
+    course: Mapped["Course"] = relationship(
+        back_populates="enrollments",
+    )
+
+    lesson_progress: Mapped[list["LessonProgress"]] = relationship(
+        back_populates="enrollment",
+    )
 
     # UUID id PK
     # UUID user_id FK

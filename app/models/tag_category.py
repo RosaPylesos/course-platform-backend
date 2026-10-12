@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
@@ -22,6 +22,10 @@ class TagCategory(Base):
         String(128),
         unique=True,
         nullable=False,
+    )
+
+    tags: Mapped[list["Tag"]] = relationship(
+        back_populates="category",
     )
     
     # UUID id PK

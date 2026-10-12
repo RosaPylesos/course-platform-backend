@@ -7,7 +7,7 @@ from sqlalchemy import (
     Enum as SQLAlchemyEnum
 )
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
 from app.models.enums import CourseDifficulty, CourseStatus
@@ -60,6 +60,27 @@ class Course(Base, TimestampMixin):
     thumbnail_path: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
+    )
+
+    author: Mapped["User"] = relationship(
+        back_populates="courses"
+    )
+
+    topic: Mapped["Topic"] = relationship(
+        back_populates="courses",
+    )
+
+    course_tags: Mapped[list["CourseTag"]] = relationship(
+        back_populates="course",
+    )
+
+    enrollments: Mapped[list["Enrollment"]] = relationship(
+        back_populates="course",
+    )
+
+    lessons: Mapped[list["Lesson"]] = relationship(
+        back_populates="course",
+        order_by="Lesson.position",
     )
 
     # UUID id PK

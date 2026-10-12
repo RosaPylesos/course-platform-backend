@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy import String, Enum as SQLAlchemyEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
 from app.models.enums import UserRole
@@ -40,6 +40,18 @@ class User(Base, TimestampMixin):
         ),
         default=UserRole.STUDENT,
         nullable=False,
+    )
+
+    courses: Mapped[list["Course"]] = relationship(
+        back_populates="author",
+    )
+
+    user_topics: Mapped[list["UserTopic"]] = relationship(
+        back_populates="user",
+    )
+
+    enrollments: Mapped[list["Enrollment"]] = relationship(
+        back_populates="user",
     )
 
     # UUID id

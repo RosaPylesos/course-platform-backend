@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
 
@@ -40,6 +40,14 @@ class LessonProgress(Base, TimestampMixin):
             "lesson_id",
             name="uq_lesson_progress_enrollment_lesson",
         ),
+    )
+
+    enrollment: Mapped["Enrollment"] = relationship(
+        back_populates="lesson_progress",
+    )
+
+    lesson: Mapped["Lesson"] = relationship(
+        back_populates="lesson_progress",
     )
     
     # UUID id PK

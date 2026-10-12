@@ -46,3 +46,15 @@ alembic current
 ```
 It will show whether your migration is on head or
 not.
+
+If you need to check SQLAlchemy relationships, 
+you should probably use this command:
+```bash
+python -c "from sqlalchemy.orm import configure_mappers; from app.models import *; configure_mappers(); print('All model relationships configured successfully')"
+```
+
+One more horrendously large command to check 
+DB dependency proper work is:
+```bash
+python -c "from app.database.connection import engine, SessionLocal; from app.api.dependencies import get_db; print('DB dependency imports successfully')"
+```
