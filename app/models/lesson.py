@@ -80,4 +80,4 @@ class Lesson(Base, TimestampMixin):
     # Timezone updated_at
 
     # UNIQUE(course_id, position)
-    # CHECK(position >= 0)
+    # CHECK(position >= 1)
