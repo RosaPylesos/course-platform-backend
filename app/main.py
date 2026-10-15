@@ -3,6 +3,7 @@ from fastapi import FastAPI
 #ROUTERS
 from app.api.routers.courses import router as courses_router
 from app.api.routers.lessons import router as lessons_router
+from app.api.routers.topics import router as topics_router
 
 from app.database.connection import test_connection
 
@@ -19,3 +20,4 @@ def root():
 
 app.include_router(courses_router)
 app.include_router(lessons_router)
+app.include_router(topics_router)

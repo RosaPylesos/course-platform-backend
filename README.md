@@ -58,3 +58,11 @@ DB dependency proper work is:
 ```bash
 python -c "from app.database.connection import engine, SessionLocal; from app.api.dependencies import get_db; print('DB dependency imports successfully')"
 ```
+
+# Misc
+## Slugify strings
+There've been used a **slugify** Python library,
+if you want to test it's work, use this command:
+```bash
+python -c "from app.utils.slug import generate_slug; print(generate_slug('YOUR-STRING-TO-SLUG-HERE'))"
+```

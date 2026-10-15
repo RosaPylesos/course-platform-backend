@@ -27,7 +27,9 @@ def get_course(
     course_id: UUID,
     db: Session = Depends(get_db)
 ):
-    statement = select(Course).where(Course.id== course_id)
+    statement = select(Course).where(
+        Course.id == course_id
+    )
     course = db.scalar(statement)
 
     if course is None:
