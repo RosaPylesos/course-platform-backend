@@ -66,3 +66,10 @@ if you want to test it's work, use this command:
 ```bash
 python -c "from app.utils.slug import generate_slug; print(generate_slug('YOUR-STRING-TO-SLUG-HERE'))"
 ```
+## JWT Token generation
+Additionally, if you want to add/change JWT secret
+token to .env, you can use this command:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+Paste it to .env as __JWT_SECRET_KEY="your key here"__

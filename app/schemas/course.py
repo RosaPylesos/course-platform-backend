@@ -6,7 +6,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.enums import CourseDifficulty, CourseStatus
 
 class CourseCreate(BaseModel):
-    author_id: UUID
     topic_id: UUID
     name: str = Field(min_length=1, max_length=64)
     description: str | None = None

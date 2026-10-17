@@ -1,13 +1,17 @@
 from uuid import UUID
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db
+from app.api.dependencies import get_db, require_roles, get_current_user
 
 from app.models.course import Course
 from app.models.lesson import Lesson
+from app.models.user import User
+from app.models.enums import UserRole, CourseStatus
 
 from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
 
@@ -19,6 +23,10 @@ router = APIRouter(
 @router.get("/",response_model=list[LessonResponse])
 def get_lessons(
     course_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(get_current_user),
+    ],
     db: Session = Depends(get_db)
 ):
     course = db.get(Course, course_id)
@@ -27,6 +35,24 @@ def get_lessons(
         raise HTTPException(
             status_code=404,
             detail="Course not found",
+        )
+
+    if (
+        current_user.role == UserRole.STUDENT
+        and course.status == CourseStatus.DRAFT
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="This course is not published yet",
+        )
+
+    if (
+        current_user.role == UserRole.AUTHOR
+        and course.author_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only view lessons in your own courses"
         )
 
     statement = (
@@ -43,6 +69,10 @@ def get_lessons(
 def get_lesson(
     course_id: UUID,
     lesson_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(get_current_user),
+    ],
     db: Session = Depends(get_db)
 ):
     course = db.get(Course, course_id)
@@ -51,6 +81,24 @@ def get_lesson(
         raise HTTPException(
             status_code=404,
             detail="Course not found",
+        )
+
+    if (
+        current_user.role == UserRole.STUDENT
+        and course.status == CourseStatus.DRAFT
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="This course is not published yet",
+        )
+
+    if (
+        current_user.role == UserRole.AUTHOR
+        and course.author_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only view lessons in your own courses",
         )
 
     lesson = db.scalar(
@@ -73,6 +121,15 @@ def get_lesson(
 def create_lesson(
     course_id: UUID,
     lesson_data: LessonCreate,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        ),
+    ],
     db: Session = Depends(get_db)
 ):
     course = db.get(Course, course_id)
@@ -81,6 +138,15 @@ def create_lesson(
         raise HTTPException(
             status_code=404,
             detail="Course not found",
+        )
+
+    if (
+        current_user.role != UserRole.ADMIN
+        and course.author_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only add lessons to your own courses"
         )
 
     statement = select(func.max(Lesson.position)).where(
@@ -106,6 +172,15 @@ def update_lesson(
     course_id: UUID,
     lesson_id: UUID,
     lesson_data: LessonUpdate,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        ),
+    ],
     db: Session = Depends(get_db),
 ):
     course = db.get(Course, course_id)
@@ -114,6 +189,15 @@ def update_lesson(
         raise HTTPException(
             status_code=404,
             detail="Course not found",
+        )
+
+    if (
+        current_user.role != UserRole.ADMIN
+        and course.author_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only edit lessons in your own courses"
         )
 
     lesson = db.scalar(
@@ -143,6 +227,15 @@ def update_lesson(
 def delete_lesson(
     course_id: UUID,
     lesson_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        ),
+    ],
     db: Session = Depends(get_db),
 ):
 
@@ -152,6 +245,15 @@ def delete_lesson(
         raise HTTPException(
             status_code=404,
             detail="Course not found",
+        )
+
+    if (
+        current_user.role != UserRole.ADMIN
+        and course.author_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only delete lessons from your own courses",
         )
 
     lesson = db.scalar(

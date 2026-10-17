@@ -1,12 +1,16 @@
 from uuid import UUID
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db
+from app.api.dependencies import get_db, require_roles
 
 from app.models.course import Course
+from app.models.user import User
+from app.models.enums import UserRole
 
 from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate
 
@@ -43,9 +47,20 @@ def get_course(
 @router.post("/", response_model=CourseResponse, status_code=201)
 def create_course(
     course_data: CourseCreate,
+    current_user: Annotated[
+        User,
+        Depends(require_roles(
+            UserRole.AUTHOR, 
+            UserRole.ADMIN
+        )),
+    ],
     db: Session = Depends(get_db),
+
 ):
-    course = Course(**course_data.model_dump())
+    course = Course(
+        **course_data.model_dump(),
+        author_id = current_user.id
+    )
 
     db.add(course)
     db.commit()
@@ -57,6 +72,15 @@ def create_course(
 def update_course(
     course_id: UUID,
     course_data: CourseUpdate,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        )
+    ],
     db: Session = Depends(get_db),
 ):
     course = db.get(Course, course_id)
@@ -65,6 +89,15 @@ def update_course(
         raise HTTPException(
             status_code=404,
             detail="Course not found"
+        )
+
+    if (
+        current_user.role != UserRole.ADMIN
+        and course.author_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only edit your own courses",
         )
 
     update_data = course_data.model_dump(exclude_unset=True)
@@ -80,6 +113,14 @@ def update_course(
 @router.delete("/{course_id}", status_code=204)
 def delete_course(
     course_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+        )),
+    ],
     db: Session = Depends(get_db),
 ):
     course = db.get(Course, course_id)
@@ -88,6 +129,15 @@ def delete_course(
         raise HTTPException(
             status_code=404,
             detail="Course not found"
+        )
+
+    if (
+        current_user.role != UserRole.ADMIN
+        and course.author_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only delete your own courses"
         )
 
     db.delete(course)

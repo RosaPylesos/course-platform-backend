@@ -1,9 +1,25 @@
-from collections.abc import Generator
+import uuid
+import jwt
 
+from collections.abc import Generator
+# from typing import Annotated
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+
+from jwt.exceptions import InvalidTokenError
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.database.connection import SessionLocal
+from app.core.security import create_access_token
+from app.database.connection import SessionLocal, settings
+from app.models.user import User
+from app.models.enums import UserRole
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
+
+# DB Dependency
 
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
@@ -12,3 +28,58 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+# Get user for further actions with API
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+
+        subject = payload.get("sub")
+        if not isinstance(subject, str):
+            raise credentials_exception
+
+        user_id = uuid.UUID(subject)
+
+    except (InvalidTokenError, ValueError):
+        raise credentials_exception from None
+
+    user = db.scalar(
+        select(User).where(
+            User.id == user_id
+        )
+    )
+
+    if user is None:
+        raise credentials_exception
+
+    return user
+
+# User's Role check
+
+def require_roles(*allowed_roles: UserRole):
+    def role_checker(
+            current_user: User = Depends(get_current_user),
+    ) -> User:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to perform this action",
+            )
+
+        return current_user
+
+    return role_checker
