@@ -2,7 +2,7 @@ from uuid import UUID
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,7 +10,7 @@ from app.api.dependencies import get_db, require_roles
 
 from app.models.course import Course
 from app.models.user import User
-from app.models.enums import UserRole
+from app.models.enums import UserRole, CourseStatus
 
 from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate
 
@@ -19,18 +19,35 @@ router = APIRouter(
     tags=["Courses"]
 )
 
-@router.get("/", response_model=list[CourseResponse])
-def get_courses(db: Session = Depends(get_db)):
-    statement = select(Course)
-    courses = db.scalars(statement).all()
+@router.get(
+    "/", 
+    response_model=list[CourseResponse],
+    status_code=status.HTTP_200_OK,
+)
+def get_courses(
+    db: Annotated[Session, Depends(get_db)],
+) -> list[Course]:
+    
+    courses = db.scalars(
+        select(Course).where(
+            Course.status == CourseStatus.PUBLISHED
+        )
+    ).all()
 
     return courses
 
-@router.get("/{course_id}", response_model=CourseResponse)
+
+
+@router.get(
+    "/{course_id}", 
+    response_model=CourseResponse,
+    status_code=status.HTTP_200_OK,
+)
 def get_course(
     course_id: UUID,
-    db: Session = Depends(get_db)
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> Course:
+    
     statement = select(Course).where(
         Course.id == course_id
     )
@@ -38,13 +55,25 @@ def get_course(
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
+        )
+
+    if course.status != CourseStatus.PUBLISHED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This course is not published yet"
         )
 
     return course
 
-@router.post("/", response_model=CourseResponse, status_code=201)
+
+
+@router.post(
+    "/", 
+    response_model=CourseResponse, 
+    status_code=status.HTTP_201_CREATED,
+)
 def create_course(
     course_data: CourseCreate,
     current_user: Annotated[
@@ -54,9 +83,10 @@ def create_course(
             UserRole.ADMIN
         )),
     ],
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 
-):
+) -> Course:
+    
     course = Course(
         **course_data.model_dump(),
         author_id = current_user.id
@@ -68,7 +98,13 @@ def create_course(
 
     return course
 
-@router.patch("/{course_id}", response_model=CourseResponse)
+
+
+@router.patch(
+    "/{course_id}", 
+    response_model=CourseResponse,
+    status_code=status.HTTP_200_OK,
+)
 def update_course(
     course_id: UUID,
     course_data: CourseUpdate,
@@ -81,13 +117,14 @@ def update_course(
             )
         )
     ],
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> Course:
+    
     course = db.get(Course, course_id)
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found"
         )
 
@@ -96,7 +133,7 @@ def update_course(
         and course.author_id != current_user.id
     ):
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only edit your own courses",
         )
 
@@ -110,6 +147,8 @@ def update_course(
 
     return course
 
+
+
 @router.delete("/{course_id}", status_code=204)
 def delete_course(
     course_id: UUID,
@@ -121,13 +160,14 @@ def delete_course(
                 UserRole.ADMIN,
         )),
     ],
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+    
     course = db.get(Course, course_id)
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found"
         )
 
@@ -136,7 +176,7 @@ def delete_course(
         and course.author_id != current_user.id
     ):
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete your own courses"
         )
 

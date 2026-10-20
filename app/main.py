@@ -5,6 +5,7 @@ from app.api.routers.courses import router as courses_router
 from app.api.routers.lessons import router as lessons_router
 from app.api.routers.topics import router as topics_router
 from app.api.routers.users import router as users_router
+from app.api.routers.enrollments import router as enrollment_router
 
 from app.database.connection import test_connection
 
@@ -23,3 +24,4 @@ app.include_router(courses_router)
 app.include_router(lessons_router)
 app.include_router(topics_router)
 app.include_router(users_router)
+app.include_router(enrollment_router)

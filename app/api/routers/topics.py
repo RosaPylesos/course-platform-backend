@@ -1,6 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -18,21 +20,33 @@ router = APIRouter(
     tags=["Topics"],
 )
 
-@router.get("/", response_model=list[TopicResponse])
+@router.get(
+    "/", 
+    response_model=list[TopicResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_topics(
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> list[Topic]:
+    
     statement = select(Topic).order_by(Topic.name)
 
     topics = db.scalars(statement).all()
 
     return topics
 
-@router.get("/{topic_id}", response_model=TopicResponse)
+
+
+@router.get(
+    "/{topic_id}", 
+    response_model=TopicResponse,
+    status_code=status.HTTP_200_OK,
+)
 def get_topic(
     topic_id: UUID,
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> Topic:
+    
     statement = select(Topic).where(
         Topic.id == topic_id
     )
@@ -41,17 +55,23 @@ def get_topic(
 
     if topic is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Topic not found",
         )
 
     return topic
 
-@router.post("/", response_model=TopicResponse, status_code=201)
+
+
+@router.post(
+    "/", 
+    response_model=TopicResponse, 
+    status_code=status.HTTP_201_CREATED,
+)
 def create_topic(
     topic_data: TopicCreate,
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> Topic:
 
     slug = generate_slug(topic_data.name)
 
@@ -78,17 +98,24 @@ def create_topic(
 
     return topic
 
-@router.patch("/{topic_id}", response_model=TopicResponse)
+
+
+@router.patch(
+    "/{topic_id}", 
+    response_model=TopicResponse,
+    status_code=status.HTTP_200_OK,
+)
 def update_topic(
     topic_id: UUID,
     topic_data: TopicUpdate,
-    db: Session = Depends(get_db)
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> Topic:
+    
     topic = db.get(Topic, topic_id)
 
     if topic is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Topic not found",
         )
 
@@ -129,16 +156,22 @@ def update_topic(
 
     return topic
 
-@router.delete("/{topic_id}", status_code=204)
+
+
+@router.delete(
+    "/{topic_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 def delete_topic(
     topic_id: UUID,
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+    
     topic = db.get(Topic, topic_id)
 
     if topic is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Topic not found",
         )
 
@@ -150,7 +183,7 @@ def delete_topic(
 
     if has_children is not None:
         raise HTTPException(
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Cannot delete a topic that has child topics",
         )
 
@@ -162,7 +195,7 @@ def delete_topic(
 
     if has_courses is not None:
         raise HTTPException(
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Cannot delete a topic that has courses",
         )
 

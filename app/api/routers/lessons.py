@@ -2,7 +2,7 @@ from uuid import UUID
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,12 @@ from app.api.dependencies import get_db, require_roles, get_current_user
 from app.models.course import Course
 from app.models.lesson import Lesson
 from app.models.user import User
-from app.models.enums import UserRole, CourseStatus
+from app.models.enrollment import Enrollment
+from app.models.enums import (
+    UserRole, 
+    CourseStatus, 
+    EnrollmentStatus
+)
 
 from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
 
@@ -20,40 +25,56 @@ router = APIRouter(
     tags=["Lessons"]
 )
 
-@router.get("/",response_model=list[LessonResponse])
+
+
+@router.get(
+    "/",
+    response_model=list[LessonResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_lessons(
     course_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(get_current_user),
-    ],
-    db: Session = Depends(get_db)
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[Lesson]:
+    
     course = db.get(Course, course_id)
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
 
-    if (
-        current_user.role == UserRole.STUDENT
-        and course.status == CourseStatus.DRAFT
+    if current_user.role == UserRole.ADMIN:
+        pass
+
+    elif (
+        current_user.role == UserRole.AUTHOR
+        and course.author_id == current_user.id
     ):
-        raise HTTPException(
-            status_code=403,
-            detail="This course is not published yet",
+        pass
+
+    else:
+        if course.status != CourseStatus.PUBLISHED:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This course is not available",
+            )
+
+        enrollment = db.scalar(
+            select(Enrollment).where(
+                Enrollment.user_id == current_user.id,
+                Enrollment.course_id == course_id,
+                Enrollment.status == EnrollmentStatus.ACTIVE,
+            )
         )
 
-    if (
-        current_user.role == UserRole.AUTHOR
-        and course.author_id != current_user.id
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view lessons in your own courses"
-        )
+        if enrollment is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must be actively enrolled in this course",
+            )
 
     statement = (
         select(Lesson)
@@ -65,41 +86,57 @@ def get_lessons(
 
     return lessons
 
-@router.get("/{lesson_id}", response_model=LessonResponse)
+
+
+@router.get(
+    "/{lesson_id}", 
+    response_model=LessonResponse,
+    status_code=status.HTTP_200_OK,
+)
 def get_lesson(
     course_id: UUID,
     lesson_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(get_current_user),
-    ],
-    db: Session = Depends(get_db)
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Lesson:
+    
     course = db.get(Course, course_id)
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
 
-    if (
-        current_user.role == UserRole.STUDENT
-        and course.status == CourseStatus.DRAFT
+    if current_user.role == UserRole.ADMIN:
+        pass
+
+    elif (
+        current_user.role == UserRole.AUTHOR
+        and course.author_id == current_user.id
     ):
-        raise HTTPException(
-            status_code=403,
-            detail="This course is not published yet",
+        pass
+
+    else:
+        if course.status != CourseStatus.PUBLISHED:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This course is not available",
+            )
+
+        enrollment = db.scalar(
+            select(Enrollment).where(
+                Enrollment.user_id == current_user.id,
+                Enrollment.course_id == course_id,
+                Enrollment.status == EnrollmentStatus.ACTIVE,
+            )
         )
 
-    if (
-        current_user.role == UserRole.AUTHOR
-        and course.author_id != current_user.id
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view lessons in your own courses",
-        )
+        if enrollment is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must be actively enrolled in this course",
+            )
 
     lesson = db.scalar(
         select(Lesson).where(
@@ -110,14 +147,19 @@ def get_lesson(
 
     if lesson is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Lesson not found",
         )
 
     return lesson
 
 
-@router.post("/", response_model=LessonResponse, status_code=201)
+
+@router.post(
+    "/", 
+    response_model=LessonResponse, 
+    status_code=status.HTTP_201_CREATED,
+)
 def create_lesson(
     course_id: UUID,
     lesson_data: LessonCreate,
@@ -130,13 +172,14 @@ def create_lesson(
             )
         ),
     ],
-    db: Session = Depends(get_db)
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> Lesson:
+    
     course = db.get(Course, course_id)
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
 
@@ -145,7 +188,7 @@ def create_lesson(
         and course.author_id != current_user.id
     ):
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only add lessons to your own courses"
         )
 
@@ -167,7 +210,13 @@ def create_lesson(
 
     return lesson
 
-@router.patch("/{lesson_id}", response_model=LessonResponse)
+
+
+@router.patch(
+    "/{lesson_id}", 
+    response_model=LessonResponse,
+    status_code=status.HTTP_200_OK,
+)
 def update_lesson(
     course_id: UUID,
     lesson_id: UUID,
@@ -181,13 +230,14 @@ def update_lesson(
             )
         ),
     ],
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> Lesson:
+    
     course = db.get(Course, course_id)
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
 
@@ -196,7 +246,7 @@ def update_lesson(
         and course.author_id != current_user.id
     ):
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only edit lessons in your own courses"
         )
 
@@ -209,7 +259,7 @@ def update_lesson(
 
     if lesson is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Lesson not found",
         )
 
@@ -223,7 +273,12 @@ def update_lesson(
 
     return lesson
 
-@router.delete("/{lesson_id}", status_code=204)
+
+
+@router.delete(
+    "/{lesson_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 def delete_lesson(
     course_id: UUID,
     lesson_id: UUID,
@@ -236,14 +291,14 @@ def delete_lesson(
             )
         ),
     ],
-    db: Session = Depends(get_db),
-):
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
 
     course = db.get(Course, course_id)
 
     if course is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found",
         )
 
@@ -252,7 +307,7 @@ def delete_lesson(
         and course.author_id != current_user.id
     ):
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete lessons from your own courses",
         )
 
@@ -265,7 +320,7 @@ def delete_lesson(
 
     if lesson is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Lesson not found",
         )
 
