@@ -12,6 +12,7 @@ from app.models.course import Course
 from app.models.lesson import Lesson
 from app.models.user import User
 from app.models.enrollment import Enrollment
+from app.models.lesson_progress import LessonProgress
 from app.models.enums import (
     UserRole, 
     CourseStatus, 
@@ -19,6 +20,7 @@ from app.models.enums import (
 )
 
 from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
+from app.schemas.lesson_progress import LessonProgressResponse
 
 router = APIRouter(
     prefix="/courses/{course_id}/lessons", 
@@ -152,6 +154,188 @@ def get_lesson(
         )
 
     return lesson
+
+@router.post(
+    "/{lesson_id}/start",
+    response_model=LessonProgressResponse,
+    status_code=status.HTTP_200_OK,
+)
+def start_lesson(
+    course_id: UUID,
+    lesson_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(get_current_user),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> LessonProgressResponse:
+
+    course = db.get(Course, course_id)
+
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found"
+        )
+
+    lesson = db.scalar(
+        select(Lesson)
+        .where(
+            Lesson.id == lesson_id,
+            Lesson.course_id == course_id,
+        )
+    )
+
+    if lesson is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lesson not found"
+        )
+
+    if course.status != CourseStatus.PUBLISHED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This course is not available",
+        )
+
+    enrollment = db.scalar(
+        select(Enrollment)
+        .where(
+            Enrollment.user_id == current_user.id,
+            Enrollment.course_id == course_id,
+            Enrollment.status == EnrollmentStatus.ACTIVE,
+        )
+    )
+
+    if enrollment is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be actively enrolled in this course",
+        )
+
+    progress = db.scalar(
+        select(LessonProgress)
+        .where(
+            LessonProgress.enrollment_id == enrollment.id,
+            LessonProgress.lesson_id == lesson_id,
+        )
+    )
+
+    if progress is not None:
+        return progress
+
+    progress = LessonProgress(
+        enrollment_id=enrollment.id,
+        lesson_id=lesson_id,
+        is_completed=False,
+    )
+
+    db.add(progress)
+    db.commit()
+    db.refresh(progress)
+
+    return progress
+
+@router.patch(
+    "/{lesson_id}/complete",
+    response_model=LessonProgressResponse,
+    status_code=status.HTTP_200_OK,
+)
+def complete_lesson(
+    course_id: UUID,
+    lesson_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(get_current_user),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> LessonProgressResponse:
+
+    course = db.get(Course, course_id)
+
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+
+    lesson = db.scalar(
+        select(Lesson)
+        .where(
+            Lesson.id == lesson_id,
+            Lesson.course_id == course_id,
+        )
+    )
+
+    if lesson is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lesson not found",
+        )
+
+    if course.status != CourseStatus.PUBLISHED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This course is not available",
+        )
+
+    enrollment = db.scalar(
+        select(Enrollment)
+        .where(
+            Enrollment.user_id == current_user.id,
+            Enrollment.course_id == course_id,
+            Enrollment.status == EnrollmentStatus.ACTIVE,
+        )
+    )
+
+    if enrollment is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be actively enrolled in this course",
+        )
+
+    progress = db.scalar(
+        select(LessonProgress)
+        .where(
+            LessonProgress.enrollment_id == enrollment.id,
+            LessonProgress.lesson_id == lesson_id,
+        )
+    )
+
+    if progress is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You must start the lesson before completing it",
+        )
+
+    if not progress.is_completed:
+        progress.is_completed = True
+
+    db.flush()
+
+    lessons_total = db.scalar(
+        select(func.count(Lesson.id))
+        .where(Lesson.course_id == course_id)
+    )
+
+    lessons_completed = db.scalar(
+        select(func.count(LessonProgress.id))
+        .where(
+            LessonProgress.enrollment_id == enrollment.id,
+            LessonProgress.is_completed.is_(True),
+        )
+    )
+
+    if(
+        lessons_total > 0
+        and lessons_completed == lessons_total
+    ):
+        enrollment.status = EnrollmentStatus.COMPLETED
+
+    db.commit()
+    db.refresh(progress)
+
+    return progress
 
 
 

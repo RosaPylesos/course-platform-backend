@@ -4,15 +4,19 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db
+
 from app.models.course import Course
+from app.models.lesson import Lesson
 from app.models.enrollment import Enrollment
 from app.models.user import User
 from app.models.enums import EnrollmentStatus, CourseStatus
+from app.models.lesson_progress import LessonProgress
+
 from app.schemas.enrollment import EntrollmentCreate, EnrollmentResponse
 
 router = APIRouter(
@@ -164,6 +168,32 @@ def restore_enrollment(
         )
 
     enrollment.status = EnrollmentStatus.ACTIVE
+
+    course = db.get(Course, enrollment.course_id)
+
+    if course is not None and course.status == CourseStatus.PUBLISHED:
+        lessons_total = db.scalar(
+            select(
+                func.count(Lesson.id)
+            )
+            .where(Lesson.course_id == enrollment.course_id)
+        )
+        
+        lessons_completed = db.scalar(
+            select(
+                func.count(LessonProgress.id)
+            )
+            .where(
+                LessonProgress.enrollment_id == enrollment.id,
+                LessonProgress.is_completed.is_(True)
+            )
+        )
+
+        if (
+            lessons_total > 0
+            and lessons_completed == lessons_total
+        ):
+            enrollment.status == EnrollmentStatus.COMPLETED
 
     db.commit()
     db.refresh(enrollment)

@@ -6,13 +6,33 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db, require_roles
+from app.api.dependencies import (
+    get_db, 
+    require_roles, 
+    get_current_user
+)
 
 from app.models.course import Course
+from app.models.lesson import Lesson
 from app.models.user import User
-from app.models.enums import UserRole, CourseStatus
+from app.models.enrollment import Enrollment
+from app.models.lesson_progress import LessonProgress
 
-from app.schemas.course import CourseResponse, CourseCreate, CourseUpdate
+from app.models.enums import (
+    UserRole, 
+    CourseStatus, 
+    EnrollmentStatus
+)
+
+from app.schemas.course import (
+    CourseResponse, 
+    CourseCreate, 
+    CourseUpdate
+)
+from app.schemas.lesson_progress import (
+    CourseProgressResponse, 
+    LessonProgressItem
+)
 
 router = APIRouter(
     prefix="/courses", 
@@ -66,6 +86,96 @@ def get_course(
         )
 
     return course
+
+
+
+@router.get(
+    "/{course_id}/progress",
+    response_model=CourseProgressResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_course_progress(
+    course_id: UUID,
+    current_user: Annotated[
+        User, 
+        Depends(get_current_user)
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> CourseProgressResponse:
+
+    course = db.get(Course, course_id)
+
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+
+    enrollment = db.scalar(
+        select(Enrollment)
+        .where(
+            Enrollment.course_id == course_id,
+            Enrollment.user_id == current_user.id,
+            Enrollment.status.in_([
+                EnrollmentStatus.ACTIVE,
+                EnrollmentStatus.COMPLETED,
+            ]),
+        )
+    )
+
+    if enrollment is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be actively enrolled on this course",
+        )
+
+    lessons = db.scalars(
+        select(Lesson)
+        .where(
+            Lesson.course_id == course_id
+        )
+        .order_by(Lesson.position)
+    ).all()
+
+    progress_records = db.scalars(
+        select(LessonProgress)
+        .where(
+            LessonProgress.enrollment_id == enrollment.id
+        )
+    ).all()
+
+    progress_by_lesson_id = {
+        progress.lesson_id: progress
+        for progress in progress_records
+    }
+
+    lesson_items = [
+        LessonProgressItem(
+            lesson_id=lesson.id,
+            lesson_name=lesson.name,
+            is_started=lesson.id in progress_by_lesson_id,
+            is_completed=(
+                progress_by_lesson_id[lesson.id].is_completed
+                if lesson.id in progress_by_lesson_id
+                else False
+            ),
+        )
+        for lesson in lessons
+    ]
+
+    lessons_started = len(progress_records)
+    lessons_completed = sum(
+        progress.is_completed
+        for progress  in progress_records
+    )
+
+    return CourseProgressResponse(
+        course_id=course.id,
+        lessons_total=len(lessons),
+        lessons_started=lessons_started,
+        lessons_completed=lessons_completed,
+        lessons=lesson_items
+    )
 
 
 
