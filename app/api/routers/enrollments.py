@@ -17,6 +17,17 @@ from app.models.user import User
 from app.models.enums import EnrollmentStatus, CourseStatus
 from app.models.lesson_progress import LessonProgress
 
+from app.application.enrollments.queries.get_my_enrollments import (
+    GetMyEnrollmentsQuery,
+)
+from app.application.enrollments.commands.create_enrollment import(
+    CreateEnrollmentCommand,
+)
+from app.infrastructure.enrollment_repository import(
+    SqlAlchemyEnrollmentRepository,
+)
+from app.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
+
 from app.schemas.enrollment import EntrollmentCreate, EnrollmentResponse
 
 router = APIRouter(
@@ -33,13 +44,12 @@ def get_my_enrollments(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> list[Enrollment]:
-    enrollments = db.scalars(
-        select(Enrollment).where(
-            Enrollment.user_id == current_user.id
-        )
-    ).all()
 
-    return list(enrollments)
+    return GetMyEnrollmentsQuery(
+        SqlAlchemyEnrollmentRepository(db)
+    ).execute(current_user.id)
+
+
 
 @router.post(
     "/",
@@ -51,56 +61,16 @@ def create_enrollment(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:
-    course = db.scalar(
-        select(Course).where(
-            Course.id == enrollment_data.course_id
-        )
-    )
 
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
+    uow = SqlAlchemyUnitOfWork(db)
+    command = CreateEnrollmentCommand(uow)
 
-    if course.status != CourseStatus.PUBLISHED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Enrollment is only available for published courses",
-        )
-
-    existing_enrollment = db.scalar(
-        select(Enrollment).where(
-            Enrollment.user_id == current_user.id,
-            Enrollment.course_id == enrollment_data.course_id,
-        )
-    )
-
-    if existing_enrollment is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="You are already enrolled in this course",
-        )
-
-    enrollment = Enrollment(
+    return command.execute(
         user_id=current_user.id,
         course_id=enrollment_data.course_id,
-        status=EnrollmentStatus.ACTIVE,
     )
 
-    db.add(enrollment)
 
-    try:
-        db.commit()
-        db.refresh(enrollment)
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="You are already enrolled in this course",
-        )
-
-    return enrollment
 
 @router.patch(
     "/{enrollment_id}/cancel",
@@ -137,6 +107,8 @@ def cancel_enrollment(
     db.refresh(enrollment)
 
     return enrollment
+
+
 
 @router.patch(
     "/{enrollment_id}/restore",
@@ -193,7 +165,7 @@ def restore_enrollment(
             lessons_total > 0
             and lessons_completed == lessons_total
         ):
-            enrollment.status == EnrollmentStatus.COMPLETED
+            enrollment.status = EnrollmentStatus.COMPLETED
 
     db.commit()
     db.refresh(enrollment)
