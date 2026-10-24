@@ -2,8 +2,7 @@ from uuid import UUID
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import (
@@ -13,15 +12,26 @@ from app.api.dependencies import (
 )
 
 from app.models.course import Course
-from app.models.lesson import Lesson
 from app.models.user import User
-from app.models.enrollment import Enrollment
-from app.models.lesson_progress import LessonProgress
 
-from app.models.enums import (
-    UserRole, 
-    CourseStatus, 
-    EnrollmentStatus
+from app.models.enums import UserRole
+
+from app.application.courses.queries import (
+    GetCoursesQuery,
+    GetCourseQuery,
+    GetCourseProgressQuery,
+)
+from app.application.courses.commands import (
+    CreateCourseCommand,
+    UpdateCourseCommand,
+    DeleteCourseCommand,
+)
+
+from app.infrastructure.course_repository import (
+    SqlAlchemyCourseRepository,
+)
+from app.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork,
 )
 
 from app.schemas.course import (
@@ -29,10 +39,9 @@ from app.schemas.course import (
     CourseCreate, 
     CourseUpdate
 )
-from app.schemas.lesson_progress import (
-    CourseProgressResponse, 
-    LessonProgressItem
-)
+from app.schemas.lesson_progress import CourseProgressResponse
+
+
 
 router = APIRouter(
     prefix="/courses", 
@@ -48,15 +57,10 @@ def get_courses(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[Course]:
     
-    courses = db.scalars(
-        select(Course).where(
-            Course.status == CourseStatus.PUBLISHED
-        )
-    ).all()
-
-    return courses
-
-
+    query = GetCoursesQuery(
+        SqlAlchemyCourseRepository(db)
+    )
+    return query.execute()
 
 @router.get(
     "/{course_id}", 
@@ -68,26 +72,10 @@ def get_course(
     db: Annotated[Session, Depends(get_db)],
 ) -> Course:
     
-    statement = select(Course).where(
-        Course.id == course_id
+    query = GetCourseQuery(
+        SqlAlchemyCourseRepository(db)
     )
-    course = db.scalar(statement)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    if course.status != CourseStatus.PUBLISHED:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This course is not published yet"
-        )
-
-    return course
-
-
+    return query.execute(course_id=course_id)
 
 @router.get(
     "/{course_id}/progress",
@@ -103,81 +91,13 @@ def get_course_progress(
     db: Annotated[Session, Depends(get_db)],
 ) -> CourseProgressResponse:
 
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    enrollment = db.scalar(
-        select(Enrollment)
-        .where(
-            Enrollment.course_id == course_id,
-            Enrollment.user_id == current_user.id,
-            Enrollment.status.in_([
-                EnrollmentStatus.ACTIVE,
-                EnrollmentStatus.COMPLETED,
-            ]),
-        )
+    query = GetCourseProgressQuery(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    if enrollment is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be actively enrolled on this course",
-        )
-
-    lessons = db.scalars(
-        select(Lesson)
-        .where(
-            Lesson.course_id == course_id
-        )
-        .order_by(Lesson.position)
-    ).all()
-
-    progress_records = db.scalars(
-        select(LessonProgress)
-        .where(
-            LessonProgress.enrollment_id == enrollment.id
-        )
-    ).all()
-
-    progress_by_lesson_id = {
-        progress.lesson_id: progress
-        for progress in progress_records
-    }
-
-    lesson_items = [
-        LessonProgressItem(
-            lesson_id=lesson.id,
-            lesson_name=lesson.name,
-            is_started=lesson.id in progress_by_lesson_id,
-            is_completed=(
-                progress_by_lesson_id[lesson.id].is_completed
-                if lesson.id in progress_by_lesson_id
-                else False
-            ),
-        )
-        for lesson in lessons
-    ]
-
-    lessons_started = len(progress_records)
-    lessons_completed = sum(
-        progress.is_completed
-        for progress  in progress_records
+    return query.execute(
+        course_id=course_id,
+        current_user=current_user,
     )
-
-    return CourseProgressResponse(
-        course_id=course.id,
-        lessons_total=len(lessons),
-        lessons_started=lessons_started,
-        lessons_completed=lessons_completed,
-        lessons=lesson_items
-    )
-
-
 
 @router.post(
     "/", 
@@ -197,18 +117,13 @@ def create_course(
 
 ) -> Course:
     
-    course = Course(
-        **course_data.model_dump(),
-        author_id = current_user.id
+    command = CreateCourseCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    db.add(course)
-    db.commit()
-    db.refresh(course)
-
-    return course
-
-
+    return command.execute(
+        course_data=course_data,
+        author_id=current_user.id,
+    )
 
 @router.patch(
     "/{course_id}", 
@@ -230,34 +145,14 @@ def update_course(
     db: Annotated[Session, Depends(get_db)],
 ) -> Course:
     
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found"
-        )
-
-    if (
-        current_user.role != UserRole.ADMIN
-        and course.author_id != current_user.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only edit your own courses",
-        )
-
-    update_data = course_data.model_dump(exclude_unset=True)
-
-    for field, value in update_data.items():
-        setattr(course, field, value)
-
-    db.commit()
-    db.refresh(course)
-
-    return course
-
-
+    command = UpdateCourseCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    return command.execute(
+        course_id=course_id,
+        course_data=course_data,
+        current_user=current_user
+    )
 
 @router.delete("/{course_id}", status_code=204)
 def delete_course(
@@ -273,24 +168,10 @@ def delete_course(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found"
-        )
-
-    if (
-        current_user.role != UserRole.ADMIN
-        and course.author_id != current_user.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete your own courses"
-        )
-
-    db.delete(course)
-    db.commit()
-
-    return None
+    command = DeleteCourseCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    command.execute(
+        course_id=course_id,
+        current_user=current_user,
+    )

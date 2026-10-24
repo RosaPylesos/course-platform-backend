@@ -53,7 +53,10 @@ def get_lessons(
 ) -> list[Lesson]:
     
     query = GetLessonsQuery(SqlAlchemyUnitOfWork(db))
-    return query.execute(course_id=course_id,user=current_user)
+    return query.execute(
+        course_id=course_id,
+        user=current_user,
+    )
 
 @router.get(
     "/{lesson_id}", 

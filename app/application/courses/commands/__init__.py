@@ -1,0 +1,3 @@
+from app.application.courses.commands.create_course import CreateCourseCommand
+from app.application.courses.commands.update_course import UpdateCourseCommand
+from app.application.courses.commands.delete_course import DeleteCourseCommand

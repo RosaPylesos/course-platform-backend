@@ -32,8 +32,6 @@ router = APIRouter(
     tags=["Enrollments"],
 )
 
-
-
 @router.get(
     "/",
     response_model=list[EnrollmentResponse],
@@ -47,8 +45,6 @@ def get_my_enrollments(
     return GetMyEnrollmentsQuery(
         SqlAlchemyEnrollmentRepository(db)
     ).execute(current_user.id)
-
-
 
 @router.post(
     "/",
@@ -70,8 +66,6 @@ def create_enrollment(
         course_id=enrollment_data.course_id,
     )
 
-
-
 @router.patch(
     "/{enrollment_id}/cancel",
     response_model=EnrollmentResponse,
@@ -91,8 +85,6 @@ def cancel_enrollment(
         enrollment_id=enrollment_id,
         user_id=current_user.id,
     )
-
-
 
 @router.patch(
     "/{enrollment_id}/restore",

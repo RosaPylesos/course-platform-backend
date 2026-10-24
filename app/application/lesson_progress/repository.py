@@ -7,6 +7,12 @@ from app.models.lesson_progress import LessonProgress
 
 class LessonProgressRepository(Protocol):
 
+    def list_by_enrollment(
+        self,
+        enrollment_id: UUID,
+    ) -> list[LessonProgress]:
+        ...
+
     def get_by_enrollment_and_lesson(
         self,
         enrollment_id: UUID,

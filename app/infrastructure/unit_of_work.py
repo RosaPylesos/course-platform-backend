@@ -27,3 +27,6 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
 
     def flush(self) -> None:
         self.db.flush()
+
+    def refresh(self, entity: object) -> None:
+        self.db.refresh(entity)

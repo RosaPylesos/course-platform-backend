@@ -21,3 +21,6 @@ class UnitOfWork(Protocol):
 
     def flush(self) -> None:
         ...
+
+    def refresh(self, entity: object) -> None:
+        ...

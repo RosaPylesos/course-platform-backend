@@ -16,6 +16,16 @@ class SqlAlchemyLessonProgressRepository(
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def list_by_enrollment(
+        self, 
+        enrollment_id: UUID,
+    ) -> list[LessonProgress]:
+
+        statement = select(LessonProgress).where(
+            LessonProgress.enrollment_id == enrollment_id
+        )
+        return list(self.db.scalars(statement).all())
+
     def get_by_enrollment_and_lesson(
         self, 
         enrollment_id: UUID, 
