@@ -2,27 +2,38 @@ from uuid import UUID
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db, require_roles, get_current_user
 
-from app.models.course import Course
-from app.models.lesson import Lesson
-from app.models.user import User
-from app.models.enrollment import Enrollment
-from app.models.lesson_progress import LessonProgress
-from app.models.enums import (
-    UserRole, 
-    CourseStatus, 
-    EnrollmentStatus
+from app.application.lessons.queries import (
+    GetLessonQuery,
+    GetLessonsQuery,
+)
+from app.application.lessons.commands import (
+    CreateLessonCommand,
+    UpdateLessonCommand,
+    DeleteLessonCommand,
+    StartLessonCommand,
+    CompleteLessonCommand,
 )
 
-from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
+from app.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
+
+from app.models.lesson import Lesson
+from app.models.user import User
+from app.models.enums import UserRole
+
+
+from app.schemas.lesson import (
+    LessonCreate, 
+    LessonResponse, 
+    LessonUpdate
+)
 from app.schemas.lesson_progress import LessonProgressResponse
 
-router = APIRouter(
+router = APIRouter (
     prefix="/courses/{course_id}/lessons", 
     tags=["Lessons"]
 )
@@ -40,55 +51,8 @@ def get_lessons(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[Lesson]:
     
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    if current_user.role == UserRole.ADMIN:
-        pass
-
-    elif (
-        current_user.role == UserRole.AUTHOR
-        and course.author_id == current_user.id
-    ):
-        pass
-
-    else:
-        if course.status != CourseStatus.PUBLISHED:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This course is not available",
-            )
-
-        enrollment = db.scalar(
-            select(Enrollment).where(
-                Enrollment.user_id == current_user.id,
-                Enrollment.course_id == course_id,
-                Enrollment.status == EnrollmentStatus.ACTIVE,
-            )
-        )
-
-        if enrollment is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must be actively enrolled in this course",
-            )
-
-    statement = (
-        select(Lesson)
-        .where(Lesson.course_id == course_id)
-        .order_by(Lesson.position)
-    )
-
-    lessons = db.scalars(statement).all()
-
-    return lessons
-
-
+    query = GetLessonsQuery(SqlAlchemyUnitOfWork(db))
+    return query.execute(course_id=course_id,user=current_user)
 
 @router.get(
     "/{lesson_id}", 
@@ -102,58 +66,12 @@ def get_lesson(
     db: Annotated[Session, Depends(get_db)],
 ) -> Lesson:
     
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    if current_user.role == UserRole.ADMIN:
-        pass
-
-    elif (
-        current_user.role == UserRole.AUTHOR
-        and course.author_id == current_user.id
-    ):
-        pass
-
-    else:
-        if course.status != CourseStatus.PUBLISHED:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This course is not available",
-            )
-
-        enrollment = db.scalar(
-            select(Enrollment).where(
-                Enrollment.user_id == current_user.id,
-                Enrollment.course_id == course_id,
-                Enrollment.status == EnrollmentStatus.ACTIVE,
-            )
-        )
-
-        if enrollment is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must be actively enrolled in this course",
-            )
-
-    lesson = db.scalar(
-        select(Lesson).where(
-            Lesson.id == lesson_id,
-            Lesson.course_id == course_id,
-        )
+    query = GetLessonQuery(SqlAlchemyUnitOfWork(db))
+    return query.execute(
+        course_id=course_id,
+        lesson_id=lesson_id,
+        user=current_user,
     )
-
-    if lesson is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lesson not found",
-        )
-
-    return lesson
 
 @router.post(
     "/{lesson_id}/start",
@@ -170,71 +88,14 @@ def start_lesson(
     db: Annotated[Session, Depends(get_db)],
 ) -> LessonProgressResponse:
 
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found"
-        )
-
-    lesson = db.scalar(
-        select(Lesson)
-        .where(
-            Lesson.id == lesson_id,
-            Lesson.course_id == course_id,
-        )
+    command = StartLessonCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    if lesson is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lesson not found"
-        )
-
-    if course.status != CourseStatus.PUBLISHED:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This course is not available",
-        )
-
-    enrollment = db.scalar(
-        select(Enrollment)
-        .where(
-            Enrollment.user_id == current_user.id,
-            Enrollment.course_id == course_id,
-            Enrollment.status == EnrollmentStatus.ACTIVE,
-        )
-    )
-
-    if enrollment is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be actively enrolled in this course",
-        )
-
-    progress = db.scalar(
-        select(LessonProgress)
-        .where(
-            LessonProgress.enrollment_id == enrollment.id,
-            LessonProgress.lesson_id == lesson_id,
-        )
-    )
-
-    if progress is not None:
-        return progress
-
-    progress = LessonProgress(
-        enrollment_id=enrollment.id,
+    return command.execute(
+        course_id=course_id,
         lesson_id=lesson_id,
-        is_completed=False,
+        user=current_user,
     )
-
-    db.add(progress)
-    db.commit()
-    db.refresh(progress)
-
-    return progress
 
 @router.patch(
     "/{lesson_id}/complete",
@@ -251,93 +112,14 @@ def complete_lesson(
     db: Annotated[Session, Depends(get_db)],
 ) -> LessonProgressResponse:
 
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    lesson = db.scalar(
-        select(Lesson)
-        .where(
-            Lesson.id == lesson_id,
-            Lesson.course_id == course_id,
-        )
+    command = CompleteLessonCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    if lesson is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lesson not found",
-        )
-
-    if course.status != CourseStatus.PUBLISHED:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This course is not available",
-        )
-
-    enrollment = db.scalar(
-        select(Enrollment)
-        .where(
-            Enrollment.user_id == current_user.id,
-            Enrollment.course_id == course_id,
-            Enrollment.status == EnrollmentStatus.ACTIVE,
-        )
+    return command.execute(
+        course_id=course_id,
+        lesson_id=lesson_id,
+        user=current_user,
     )
-
-    if enrollment is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be actively enrolled in this course",
-        )
-
-    progress = db.scalar(
-        select(LessonProgress)
-        .where(
-            LessonProgress.enrollment_id == enrollment.id,
-            LessonProgress.lesson_id == lesson_id,
-        )
-    )
-
-    if progress is None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="You must start the lesson before completing it",
-        )
-
-    if not progress.is_completed:
-        progress.is_completed = True
-
-    db.flush()
-
-    lessons_total = db.scalar(
-        select(func.count(Lesson.id))
-        .where(Lesson.course_id == course_id)
-    )
-
-    lessons_completed = db.scalar(
-        select(func.count(LessonProgress.id))
-        .where(
-            LessonProgress.enrollment_id == enrollment.id,
-            LessonProgress.is_completed.is_(True),
-        )
-    )
-
-    if(
-        lessons_total > 0
-        and lessons_completed == lessons_total
-    ):
-        enrollment.status = EnrollmentStatus.COMPLETED
-
-    db.commit()
-    db.refresh(progress)
-
-    return progress
-
-
 
 @router.post(
     "/", 
@@ -358,43 +140,15 @@ def create_lesson(
     ],
     db: Annotated[Session, Depends(get_db)],
 ) -> Lesson:
-    
-    course = db.get(Course, course_id)
 
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    if (
-        current_user.role != UserRole.ADMIN
-        and course.author_id != current_user.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only add lessons to your own courses"
-        )
-
-    statement = select(func.max(Lesson.position)).where(
-        Lesson.course_id == course_id
+    command = CreateLessonCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-    max_position = db.scalar(statement)
-    next_position = (max_position or 0) + 1
-
-    lesson = Lesson(
-        **lesson_data.model_dump(),
+    return command.execute(
         course_id=course_id,
-        position=next_position,
+        lesson_data=lesson_data,
+        user=current_user,
     )
-
-    db.add(lesson)
-    db.commit()
-    db.refresh(lesson)
-
-    return lesson
-
-
 
 @router.patch(
     "/{lesson_id}", 
@@ -417,47 +171,15 @@ def update_lesson(
     db: Annotated[Session, Depends(get_db)],
 ) -> Lesson:
     
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    if (
-        current_user.role != UserRole.ADMIN
-        and course.author_id != current_user.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only edit lessons in your own courses"
-        )
-
-    lesson = db.scalar(
-        select(Lesson).where(
-            Lesson.id == lesson_id,
-            Lesson.course_id == course_id,
-        )
+    command = UpdateLessonCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    if lesson is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lesson not found",
-        )
-
-    update_data = lesson_data.model_dump(exclude_unset=True)
-
-    for field, value in update_data.items():
-        setattr(lesson, field, value)
-
-    db.commit()
-    db.refresh(lesson)
-
-    return lesson
-
-
+    return command.execute(
+        course_id=course_id,
+        lesson_id=lesson_id,
+        lesson_data=lesson_data,
+        user=current_user,
+    )
 
 @router.delete(
     "/{lesson_id}", 
@@ -478,35 +200,12 @@ def delete_lesson(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
 
-    course = db.get(Course, course_id)
-
-    if course is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-
-    if (
-        current_user.role != UserRole.ADMIN
-        and course.author_id != current_user.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete lessons from your own courses",
-        )
-
-    lesson = db.scalar(
-        select(Lesson).where(
-            Lesson.id == lesson_id,
-            Lesson.course_id == course_id,
-        )
+    command = DeleteLessonCommand(
+        SqlAlchemyUnitOfWork(db)
     )
 
-    if lesson is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lesson not found",
-        )
-
-    db.delete(lesson)
-    db.commit()
+    command.execute(
+        course_id=course_id,
+        lesson_id=lesson_id,
+        user=current_user,
+    )

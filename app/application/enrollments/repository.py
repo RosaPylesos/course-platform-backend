@@ -10,8 +10,6 @@ class EnrollmentRepository(Protocol):
     def list_by_user(self, user_id: UUID) -> list[Enrollment]:
         ...
 
-
-
     def get_by_id_for_user(
         self,
         enrollment_id: UUID,
@@ -19,16 +17,12 @@ class EnrollmentRepository(Protocol):
     ) -> Enrollment | None:
         ...
 
-
-
     def get_by_user_and_course(
         self,
         user_id: UUID,
         course_id: UUID
     ) -> Enrollment | None:
         ...
-
-
 
     def add(self, enrollment: Enrollment) -> None:
         ...

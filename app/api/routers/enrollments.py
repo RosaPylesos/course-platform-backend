@@ -2,27 +2,24 @@ from uuid import UUID
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db
 
-from app.models.course import Course
-from app.models.lesson import Lesson
 from app.models.enrollment import Enrollment
 from app.models.user import User
-from app.models.enums import EnrollmentStatus, CourseStatus
-from app.models.lesson_progress import LessonProgress
 
-from app.application.enrollments.queries.get_my_enrollments import (
+from app.application.enrollments.queries import (
     GetMyEnrollmentsQuery,
 )
-from app.application.enrollments.commands.create_enrollment import(
+from app.application.enrollments.commands import(
     CreateEnrollmentCommand,
+    CancelEnrollmentCommand,
+    RestoreEnrollmentCommand,
 )
+
 from app.infrastructure.enrollment_repository import(
     SqlAlchemyEnrollmentRepository,
 )
@@ -34,6 +31,8 @@ router = APIRouter(
     prefix="/enrollments",
     tags=["Enrollments"],
 )
+
+
 
 @router.get(
     "/",
@@ -62,8 +61,9 @@ def create_enrollment(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:
 
-    uow = SqlAlchemyUnitOfWork(db)
-    command = CreateEnrollmentCommand(uow)
+    command = CreateEnrollmentCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
 
     return command.execute(
         user_id=current_user.id,
@@ -82,31 +82,15 @@ def cancel_enrollment(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:
-    enrollment = db.scalar(
-        select(Enrollment).where(
-            Enrollment.id == enrollment_id,
-            Enrollment.user_id == current_user.id,
-        )
+
+    command = CancelEnrollmentCommand(
+        SqlAlchemyUnitOfWork(db)
     )
 
-    if enrollment is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Enrollment not found",
-        )
-
-    if enrollment.status != EnrollmentStatus.ACTIVE:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Only active enrollments can be cancelled"
-        )
-
-    enrollment.status = EnrollmentStatus.CANCELLED
-
-    db.commit()
-    db.refresh(enrollment)
-
-    return enrollment
+    return command.execute(
+        enrollment_id=enrollment_id,
+        user_id=current_user.id,
+    )
 
 
 
@@ -120,54 +104,12 @@ def restore_enrollment(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:
-    enrollment = db.scalar(
-        select(Enrollment).where(
-            Enrollment.id == enrollment_id,
-            Enrollment.user_id == current_user.id,
-        )
+    
+    command = RestoreEnrollmentCommand(
+        SqlAlchemyUnitOfWork(db)
     )
 
-    if enrollment is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Enrollment not found",
-        )
-
-    if enrollment.status != EnrollmentStatus.CANCELLED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Only cancelled enrollments can be restored",
-        )
-
-    enrollment.status = EnrollmentStatus.ACTIVE
-
-    course = db.get(Course, enrollment.course_id)
-
-    if course is not None and course.status == CourseStatus.PUBLISHED:
-        lessons_total = db.scalar(
-            select(
-                func.count(Lesson.id)
-            )
-            .where(Lesson.course_id == enrollment.course_id)
-        )
-        
-        lessons_completed = db.scalar(
-            select(
-                func.count(LessonProgress.id)
-            )
-            .where(
-                LessonProgress.enrollment_id == enrollment.id,
-                LessonProgress.is_completed.is_(True)
-            )
-        )
-
-        if (
-            lessons_total > 0
-            and lessons_completed == lessons_total
-        ):
-            enrollment.status = EnrollmentStatus.COMPLETED
-
-    db.commit()
-    db.refresh(enrollment)
-
-    return enrollment
+    return command.execute(
+        enrollment_id=enrollment_id,
+        user_id=current_user.id,
+    )

@@ -1,0 +1,1 @@
+from app.application.enrollments.queries.get_my_enrollments import GetMyEnrollmentsQuery
