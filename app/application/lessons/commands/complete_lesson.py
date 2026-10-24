@@ -6,6 +6,8 @@ from app.application.exceptions import(
     ResourceNotFoundError,
 )
 from app.application.unit_of_work import UnitOfWork
+from app.application.events.course_events import CourseCompleted
+from app.application.events.dispatcher import EventDispatcher
 
 from app.models.enums import CourseStatus, EnrollmentStatus
 from app.models.lesson_progress import LessonProgress
@@ -14,8 +16,13 @@ from app.models.user import User
 
 
 class CompleteLessonCommand:
-    def __init__(self, uow: UnitOfWork) -> None:
+    def __init__(
+        self, 
+        uow: UnitOfWork,
+        event_dispatcher: EventDispatcher,
+    ) -> None:
         self.uow = uow
+        self.event_dispatcher = event_dispatcher
 
     def execute(
         self,
@@ -62,6 +69,8 @@ class CompleteLessonCommand:
                 "Lesson must be started before it can be completed"
             )
 
+        course_completed = False
+
         try:
             if not progress.is_completed:
                 progress.is_completed = True
@@ -78,13 +87,23 @@ class CompleteLessonCommand:
             if(
                 lessons_total > 0
                 and lessons_completed == lessons_total
+                and enrollment.status == EnrollmentStatus.ACTIVE
             ):
                 enrollment.status = EnrollmentStatus.COMPLETED
+                course_completed = True
 
             self.uow.commit()
 
         except Exception:
             self.uow.rollback()
             raise
+
+        if course_completed:
+            event = CourseCompleted(
+                enrollment_id=enrollment.id,
+                user_id=user.id,
+                course_id=course_id,
+            )
+            self.event_dispatcher.dispatch(event)
 
         return progress

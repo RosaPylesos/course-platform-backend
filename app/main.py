@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+import logging
 
 #ROUTERS
 from app.api.routers.courses import router as courses_router
@@ -24,6 +25,8 @@ from app.application.exceptions import (
 from app.database.connection import test_connection
 
 app = FastAPI(title="Course Platform API")
+
+logging.basicConfig(level=logging.INFO)
 
 app.add_exception_handler(
     ResourceNotFoundError,

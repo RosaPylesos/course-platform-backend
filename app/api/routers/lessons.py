@@ -18,6 +18,7 @@ from app.application.lessons.commands import (
     StartLessonCommand,
     CompleteLessonCommand,
 )
+from app.application.events.setup import event_dispatcher
 
 from app.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 
@@ -113,7 +114,8 @@ def complete_lesson(
 ) -> LessonProgressResponse:
 
     command = CompleteLessonCommand(
-        SqlAlchemyUnitOfWork(db)
+        SqlAlchemyUnitOfWork(db),
+        event_dispatcher
     )
     return command.execute(
         course_id=course_id,
