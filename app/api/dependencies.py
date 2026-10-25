@@ -9,11 +9,14 @@ from fastapi.security import OAuth2PasswordBearer
 
 from jwt.exceptions import InvalidTokenError
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import create_access_token
 from app.database.connection import SessionLocal, settings
+
+from app.infrastructure.user_repository import (
+    SqlAlchemyUserRepository
+)
+
 from app.models.user import User
 from app.models.enums import UserRole
 
@@ -57,11 +60,8 @@ def get_current_user(
     except (InvalidTokenError, ValueError):
         raise credentials_exception from None
 
-    user = db.scalar(
-        select(User).where(
-            User.id == user_id
-        )
-    )
+    user_repository = SqlAlchemyUserRepository(db)
+    user = user_repository.get_by_id(user_id)
 
     if user is None:
         raise credentials_exception

@@ -8,6 +8,7 @@ from app.infrastructure import (
     SqlAlchemyEnrollmentRepository,
     SqlAlchemyLessonProgressRepository,
     SqlAlchemyTopicRepository,
+    SqlAlchemyUserRepository,
 )
 
 
@@ -19,6 +20,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.lessons = SqlAlchemyLessonRepository(db)
         self.lesson_progress = SqlAlchemyLessonProgressRepository(db)
         self.topics = SqlAlchemyTopicRepository(db)
+        self.users = SqlAlchemyUserRepository(db)
         self.db = db
 
     def commit(self) -> None:

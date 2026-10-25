@@ -7,6 +7,8 @@ from app.application.exceptions import(
     ResourceNotFoundError,
     AccessDeniedError,
     InvalidInputError,
+    DuplicateEmailError,
+    InvalidCredentialsError,
 )
 
 
@@ -49,9 +51,19 @@ async def business_rule_handler(
 
 async def invalid_input_handler(
     request: Request,
-    exc: ConflictError,
+    exc: InvalidInputError,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"detail": str(exc)},
     )
+
+async def invalid_credentials_handler(
+    request: Request,
+    exc: InvalidCredentialsError,
+) -> JSONResponse:
+    return JSONResponse (
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"detail": str(exc)},
+        headers={"WWW-Authenticate": "Bearer"},
+)

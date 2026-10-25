@@ -1,18 +1,26 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db, get_current_user
-from app.core.security import (
-    create_access_token, 
-    hash_password,
-    verify_password,
+
+from app.application.users.queries import (
+    AuthenticateUserQuery,
 )
+from app.application.users.commands import (
+    RegisterUserCommand,
+)
+
+from app.infrastructure.user_repository import(
+    SqlAlchemyUserRepository,
+)
+from app.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork,
+)
+
 from app.models.user import User
 from app.schemas.user import (
     UserRegister, 
@@ -36,114 +44,55 @@ def register_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
     
-    email = str(user_data.email).strip().lower()
-
-    existing_user = db.scalar(
-        select(User).where(
-            User.email == email
-        )
+    command = RegisterUserCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User with this email already exists",
-        )
-
-    user = User(
-        name = user_data.name,
-        surname = user_data.surname,
-        email = email,
-        password_hash = hash_password(user_data.password),
-    )
-
-    db.add(user)
-
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User with this email already exists",
-        )
-
-    db.refresh(user)
-
-    return user
-
-
+    return command.execute(user_data)
 
 @router.post(
     "/login", 
     response_model=TokenResponse,
-    #status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_200_OK,
 )
 def login_user(
     user_data: UserLogin,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
     
-    email = str(user_data.email).strip().lower()
-
-    user = db.scalar(
-        select(User).where(User.email == email)
+    query = AuthenticateUserQuery(
+        SqlAlchemyUserRepository(db)
     )
-
-    if user is None or not verify_password(
-        user_data.password,
-        user.password_hash,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    access_token = create_access_token(str(user.id))
-
+    _, access_token = query.execute(
+        email=str(user_data.email),
+        password=user_data.password,
+    )
     return TokenResponse(access_token=access_token)
-
-
 
 @router.post(
     "/token", 
     response_model=TokenResponse,
-    #status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_200_OK,
 )
 def login_for_swagger(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    #form_data: OAuth2PasswordRequestForm = Depends(),
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
     
-    email = form_data.username.strip().lower()
-
-    user = db.scalar(
-        select(User).where(User.email == email)
-    )
-
-    if user is None or not verify_password(
-        form_data.password,
-        user.password_hash,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    query = AuthenticateUserQuery(
+            SqlAlchemyUserRepository(db)
         )
-
-    access_token = create_access_token(str(user.id))
-
+    _, access_token = query.execute(
+        email=form_data.username,
+        password=form_data.password,
+    )
     return TokenResponse(access_token=access_token)
 
 @router.get(
     "/me", 
     response_model=UserResponse,
-    #status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_200_OK,
 )
 def get_me(
     current_user: Annotated[User, Depends(get_current_user)],
-    #current_user: User = Depends(get_current_user),
 ) -> User:
     return current_user

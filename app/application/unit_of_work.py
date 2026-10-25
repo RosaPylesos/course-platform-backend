@@ -5,6 +5,7 @@ from app.application.enrollments.repository import EnrollmentRepository
 from app.application.lessons.repository import LessonRepository
 from app.application.lesson_progress.repository import LessonProgressRepository
 from app.application.topics.repository import TopicRepository
+from app.application.users.repository import UserRepository
 
 
 
@@ -14,6 +15,7 @@ class UnitOfWork(Protocol):
     lessons: LessonRepository
     lesson_progress: LessonProgressRepository
     topics: TopicRepository
+    users: UserRepository
 
     def commit(self) -> None:
         ...

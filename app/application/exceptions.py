@@ -15,3 +15,9 @@ class ConflictError(ApplicationError):
 
 class InvalidInputError(ApplicationError):
     "The provided input is ivalid."
+
+class DuplicateEmailError(ConflictError):
+    "A user with this email already exists."
+
+class InvalidCredentialsError(ApplicationError):
+    "The provided credentials are invalid."

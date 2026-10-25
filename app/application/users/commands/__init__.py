@@ -1,0 +1,1 @@
+from app.application.users.commands.register_user import RegisterUserCommand

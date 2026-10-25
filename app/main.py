@@ -15,6 +15,7 @@ from app.api.exception_handlers import (
     resourse_not_found_handler,
     access_denied_handler,
     invalid_input_handler,
+    invalid_credentials_handler,
 )
 from app.application.exceptions import (
     BusinessRuleError,
@@ -22,6 +23,7 @@ from app.application.exceptions import (
     ResourceNotFoundError,
     AccessDeniedError,
     InvalidInputError,
+    InvalidCredentialsError,
 )
 
 from app.database.connection import test_connection
@@ -49,6 +51,10 @@ app.add_exception_handler(
 app.add_exception_handler(
     InvalidInputError,
     invalid_input_handler,
+)
+app.add_exception_handler(
+    InvalidCredentialsError,
+    invalid_credentials_handler,
 )
 
 # temporary function to test pg connection

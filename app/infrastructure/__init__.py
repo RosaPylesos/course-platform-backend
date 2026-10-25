@@ -3,3 +3,4 @@ from app.infrastructure.enrollment_repository import SqlAlchemyEnrollmentReposit
 from app.infrastructure.lesson_progress_repository import SqlAlchemyLessonProgressRepository
 from app.infrastructure.lesson_repository import SqlAlchemyLessonRepository
 from app.infrastructure.topic_repository import SqlAlchemyTopicRepository
+from app.infrastructure.user_repository import SqlAlchemyUserRepository
