@@ -21,7 +21,10 @@ from app.schemas.user import (
     TokenResponse,
 )
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(
+    prefix="/users", 
+    tags=["Users"],
+)
 
 @router.post(
     "/register",

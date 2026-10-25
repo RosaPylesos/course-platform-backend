@@ -41,8 +41,6 @@ from app.schemas.course import (
 )
 from app.schemas.lesson_progress import CourseProgressResponse
 
-
-
 router = APIRouter(
     prefix="/courses", 
     tags=["Courses"]

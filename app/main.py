@@ -14,12 +14,14 @@ from app.api.exception_handlers import (
     conflict_handler,
     resourse_not_found_handler,
     access_denied_handler,
+    invalid_input_handler,
 )
 from app.application.exceptions import (
     BusinessRuleError,
     ConflictError,
     ResourceNotFoundError,
     AccessDeniedError,
+    InvalidInputError,
 )
 
 from app.database.connection import test_connection
@@ -43,6 +45,10 @@ app.add_exception_handler(
 app.add_exception_handler(
     AccessDeniedError,
     access_denied_handler,
+)
+app.add_exception_handler(
+    InvalidInputError,
+    invalid_input_handler,
 )
 
 # temporary function to test pg connection

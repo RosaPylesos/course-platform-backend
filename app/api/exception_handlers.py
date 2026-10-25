@@ -6,6 +6,7 @@ from app.application.exceptions import(
     ConflictError,
     ResourceNotFoundError,
     AccessDeniedError,
+    InvalidInputError,
 )
 
 
@@ -43,5 +44,14 @@ async def business_rule_handler(
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+async def invalid_input_handler(
+    request: Request,
+    exc: ConflictError,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"detail": str(exc)},
     )

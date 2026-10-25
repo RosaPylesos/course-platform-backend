@@ -2,18 +2,35 @@ from uuid import UUID
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db
 
+from app.application.topics.queries import (
+    GetTopicsQuery,
+    GetTopicQuery,
+)
+from app.application.topics.commands import (
+    CreateTopicCommand,
+    UpdateTopicCommand,
+    DeleteTopicCommand,
+)
+
+from app.infrastructure.topic_repository import (
+    SqlAlchemyTopicRepository,
+)
+from app.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork,
+)
+
 from app.models.topic import Topic
-from app.models.course import Course
 
-from app.schemas.topic import TopicCreate, TopicResponse, TopicUpdate
-
-from app.utils.slug import generate_slug
+from app.schemas.topic import (
+    TopicCreate, 
+    TopicResponse, 
+    TopicUpdate,
+)
 
 router = APIRouter(
     prefix="/topics",
@@ -29,13 +46,10 @@ def get_topics(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[Topic]:
     
-    statement = select(Topic).order_by(Topic.name)
-
-    topics = db.scalars(statement).all()
-
-    return topics
-
-
+    query = GetTopicsQuery(
+        SqlAlchemyTopicRepository(db)
+    )
+    return query.execute()
 
 @router.get(
     "/{topic_id}", 
@@ -47,21 +61,10 @@ def get_topic(
     db: Annotated[Session, Depends(get_db)],
 ) -> Topic:
     
-    statement = select(Topic).where(
-        Topic.id == topic_id
+    query = GetTopicQuery(
+        SqlAlchemyTopicRepository(db)
     )
-
-    topic = db.scalar(statement)
-
-    if topic is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Topic not found",
-        )
-
-    return topic
-
-
+    return query.execute(topic_id)
 
 @router.post(
     "/", 
@@ -73,32 +76,10 @@ def create_topic(
     db: Annotated[Session, Depends(get_db)],
 ) -> Topic:
 
-    slug = generate_slug(topic_data.name)
-
-    base_slug = slug
-    counter = 2
-
-    while db.scalar(
-        select(Topic.id).where(
-            Topic.slug == slug
-        )
-    ) is not None:
-        slug = f"{base_slug}-{counter}"
-        counter+=1
-    
-    topic = Topic(
-        name=topic_data.name,
-        parent_id = topic_data.parent_id,
-        slug=slug,
+    command = CreateTopicCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    db.add(topic)
-    db.commit()
-    db.refresh(topic)
-
-    return topic
-
-
+    return command.execute(topic_data)
 
 @router.patch(
     "/{topic_id}", 
@@ -110,53 +91,14 @@ def update_topic(
     topic_data: TopicUpdate,
     db: Annotated[Session, Depends(get_db)],
 ) -> Topic:
-    
-    topic = db.get(Topic, topic_id)
 
-    if topic is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Topic not found",
-        )
-
-    update_data = topic_data.model_dump(exclude_unset=True)
-
-    if "name" in update_data:
-        new_name = update_data["name"]
-
-        if new_name is None:
-            raise HTTPException(
-                status_code=422,
-                detail="Topic name cannot be null",
-            )
-
-        slug = generate_slug(new_name)
-        base_slug = slug
-        counter = 2
-
-        while db.scalar(
-            select(Topic.id).where(
-                Topic.slug == slug,
-                Topic.id != topic_id,
-            )
-        ) is not None:
-            slug = f"{base_slug}-{counter}"
-            counter+=1
-
-        topic.name = new_name
-        topic.slug = slug
-
-        update_data.pop("name")
-
-    for field, value in update_data.items():
-        setattr(topic, field, value)
-
-    db.commit()
-    db.refresh(topic)
-
-    return topic
-
-
+    command = UpdateTopicCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    return command.execute(
+        topic_id,
+        topic_data,
+    )
 
 @router.delete(
     "/{topic_id}", 
@@ -167,37 +109,7 @@ def delete_topic(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     
-    topic = db.get(Topic, topic_id)
-
-    if topic is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Topic not found",
-        )
-
-    has_children = db.scalar(
-        select(Topic.id)
-        .where(Topic.parent_id == topic_id)
-        .limit(1)
+    command = DeleteTopicCommand(
+        SqlAlchemyUnitOfWork(db)
     )
-
-    if has_children is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Cannot delete a topic that has child topics",
-        )
-
-    has_courses = db.scalar(
-        select(Course.id)
-        .where(Course.topic_id == topic_id)
-        .limit(1)
-    )
-
-    if has_courses is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Cannot delete a topic that has courses",
-        )
-
-    db.delete(topic)
-    db.commit()
+    command.execute(topic_id)

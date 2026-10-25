@@ -39,8 +39,6 @@ router = APIRouter (
     tags=["Lessons"]
 )
 
-
-
 @router.get(
     "/",
     response_model=list[LessonResponse],

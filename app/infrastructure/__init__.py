@@ -2,3 +2,4 @@ from app.infrastructure.course_repository import SqlAlchemyCourseRepository
 from app.infrastructure.enrollment_repository import SqlAlchemyEnrollmentRepository
 from app.infrastructure.lesson_progress_repository import SqlAlchemyLessonProgressRepository
 from app.infrastructure.lesson_repository import SqlAlchemyLessonRepository
+from app.infrastructure.topic_repository import SqlAlchemyTopicRepository
