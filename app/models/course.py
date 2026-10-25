@@ -76,11 +76,15 @@ class Course(Base, TimestampMixin):
 
     enrollments: Mapped[list["Enrollment"]] = relationship(
         back_populates="course",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     lessons: Mapped[list["Lesson"]] = relationship(
         back_populates="course",
         order_by="Lesson.position",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     # UUID id PK

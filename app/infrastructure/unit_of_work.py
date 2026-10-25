@@ -2,14 +2,12 @@ from sqlalchemy.orm import Session
 
 from app.application.unit_of_work import UnitOfWork
 
-from app.infrastructure import (
-    SqlAlchemyCourseRepository,
-    SqlAlchemyLessonRepository,
-    SqlAlchemyEnrollmentRepository,
-    SqlAlchemyLessonProgressRepository,
-    SqlAlchemyTopicRepository,
-    SqlAlchemyUserRepository,
-)
+from app.infrastructure.user_repository import SqlAlchemyUserRepository
+from app.infrastructure.topic_repository import SqlAlchemyTopicRepository
+from app.infrastructure.course_repository import SqlAlchemyCourseRepository
+from app.infrastructure.enrollment_repository import SqlAlchemyEnrollmentRepository
+from app.infrastructure.lesson_progress_repository import SqlAlchemyLessonProgressRepository
+from app.infrastructure.lesson_repository import SqlAlchemyLessonRepository
 
 
 

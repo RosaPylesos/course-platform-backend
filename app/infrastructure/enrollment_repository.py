@@ -12,9 +12,10 @@ class SqlAlchemyEnrollmentRepository(EnrollmentRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-
-
-    def list_by_user(self, user_id: UUID) -> list[Enrollment]:
+    def list_by_user(
+        self, 
+        user_id: UUID
+    ) -> list[Enrollment]:
 
         statement = select(Enrollment).where(
             Enrollment.user_id == user_id
@@ -24,7 +25,15 @@ class SqlAlchemyEnrollmentRepository(EnrollmentRepository):
             self.db.scalars(statement).all()
         )
 
+    def list_by_course(
+        self,
+        course_id: UUID,
+    ) -> list[Enrollment]:
 
+        statement = select(Enrollment).where(
+            Enrollment.course_id == course_id
+        )
+        return list(self.db.scalars(statement).all())
 
     def get_by_id_for_user(
         self,
@@ -39,8 +48,6 @@ class SqlAlchemyEnrollmentRepository(EnrollmentRepository):
 
         return self.db.scalar(statement)
 
-
-
     def get_by_user_and_course(
         self,
         user_id: UUID,
@@ -53,8 +60,6 @@ class SqlAlchemyEnrollmentRepository(EnrollmentRepository):
         )
 
         return self.db.scalar(statement)
-
-
 
     def add(self, enrollment: Enrollment) -> None:
         self.db.add(enrollment)

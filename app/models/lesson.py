@@ -68,6 +68,8 @@ class Lesson(Base, TimestampMixin):
 
     lesson_progress: Mapped[list["LessonProgress"]] = relationship(
         back_populates="lesson",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     # UUID id PK

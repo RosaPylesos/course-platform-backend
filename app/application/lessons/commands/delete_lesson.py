@@ -6,7 +6,7 @@ from app.application.exceptions import(
 )
 from app.application.unit_of_work import UnitOfWork
 
-from app.models.enums import UserRole
+from app.models.enums import UserRole, EnrollmentStatus
 from app.models.user import User
 
 
@@ -44,6 +44,26 @@ class DeleteLessonCommand:
 
         try:
             self.uow.lessons.delete(lesson)
+            self.uow.flush()
+
+            lesson_total = self.uow.lessons.count_by_course(course_id)
+
+            if lesson_total > 0:
+                enrollments = self.uow.enrollments.list_by_course(course_id)
+
+                for enrollment in enrollments:
+                    if enrollment.status != EnrollmentStatus.ACTIVE:
+                        continue
+
+                    lessons_completed = (
+                        self.uow.lesson_progress.count_completed_by_enrollment(
+                            enrollment.id
+                        )
+                    )
+
+                    if lessons_completed == lesson_total:
+                        enrollment.status = EnrollmentStatus.COMPLETED
+
             self.uow.commit()
         except Exception:
             self.uow.rollback()

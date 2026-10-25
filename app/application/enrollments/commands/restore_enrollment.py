@@ -18,8 +18,6 @@ class RestoreEnrollmentCommand:
     def __init__(self, uow: UnitOfWork) -> None:
         self.uow = uow
 
-
-
     def execute(
         self,
         enrollment_id: UUID,

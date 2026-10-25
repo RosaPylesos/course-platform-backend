@@ -7,7 +7,16 @@ from app.models.enrollment import Enrollment
 
 class EnrollmentRepository(Protocol):
 
-    def list_by_user(self, user_id: UUID) -> list[Enrollment]:
+    def list_by_user(
+        self, 
+        user_id: UUID
+    ) -> list[Enrollment]:
+        ...
+
+    def list_by_course(
+        self, 
+        course_id: UUID
+    ) -> list[Enrollment]:
         ...
 
     def get_by_id_for_user(

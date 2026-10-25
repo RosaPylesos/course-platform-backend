@@ -32,5 +32,9 @@ class DeleteCourseCommand:
         ):
             raise AccessDeniedError("You can only delete your own courses")
 
-        self.uow.courses.delete(course)
-        self.uow.commit()
+        try:
+            self.uow.courses.delete(course)
+            self.uow.commit()
+        except Exception:
+            self.uow.rollback()
+            raise

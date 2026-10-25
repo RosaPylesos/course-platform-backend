@@ -3,6 +3,7 @@ from uuid import UUID
 from app.application.exceptions import (
     AccessDeniedError,
     ResourceNotFoundError,
+    InvalidInputError,
 )
 from app.application.unit_of_work import UnitOfWork
 
@@ -37,6 +38,18 @@ class UpdateCourseCommand:
             raise AccessDeniedError("You can only edit your own courses")
 
         update_data = course_data.model_dump(exclude_unset=True)
+
+        if (
+            "topic_id" in update_data 
+            and update_data["topic_id"] is None
+        ):
+            raise InvalidInputError("Topic cannot be null")
+
+        if (
+            "name" in update_data
+            and update_data["name"] is None
+        ):
+            raise InvalidInputError("Course name cannot be null")
 
         for field, value in update_data.items():
             setattr(course, field, value)
