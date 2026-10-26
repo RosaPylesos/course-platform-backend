@@ -52,10 +52,9 @@ class PublishCourseCommand:
         try:
             course.status = CourseStatus.PUBLISHED
             self.uow.commit()
+            self.uow.refresh(course)
         except Exception:
             self.uow.rollback()
             raise
-
-        self.uow.refresh(course)
 
         return course

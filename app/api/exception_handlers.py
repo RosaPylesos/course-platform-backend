@@ -7,13 +7,11 @@ from app.application.exceptions import(
     ResourceNotFoundError,
     AccessDeniedError,
     InvalidInputError,
-    DuplicateEmailError,
     InvalidCredentialsError,
 )
 
 
-
-async def resourse_not_found_handler(
+async def resource_not_found_handler(
     request: Request,
     exc: ResourceNotFoundError,
 ) -> JSONResponse:
@@ -21,6 +19,7 @@ async def resourse_not_found_handler(
         status_code=status.HTTP_404_NOT_FOUND,
         content={"detail": str(exc)},
     )
+
 
 async def access_denied_handler(
     request: Request,
@@ -31,6 +30,7 @@ async def access_denied_handler(
         content={"detail": str(exc)},
     )
 
+
 async def conflict_handler(
     request: Request,
     exc: ConflictError,
@@ -39,6 +39,7 @@ async def conflict_handler(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},
     )
+
 
 async def business_rule_handler(
     request: Request,
@@ -49,6 +50,7 @@ async def business_rule_handler(
         content={"detail": str(exc)},
     )
 
+
 async def invalid_input_handler(
     request: Request,
     exc: InvalidInputError,
@@ -57,6 +59,7 @@ async def invalid_input_handler(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"detail": str(exc)},
     )
+
 
 async def invalid_credentials_handler(
     request: Request,

@@ -71,15 +71,3 @@ class Lesson(Base, TimestampMixin):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-
-    # UUID id PK
-    # UUID course_id FK
-    # String(64) name
-    # Text description NULLABLE
-    # JSONB content NULLABLE?
-    # int position
-    # Timezone created_at
-    # Timezone updated_at
-
-    # UNIQUE(course_id, position)
-    # CHECK(position >= 1)

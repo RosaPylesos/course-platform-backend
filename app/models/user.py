@@ -53,14 +53,3 @@ class User(Base, TimestampMixin):
     enrollments: Mapped[list["Enrollment"]] = relationship(
         back_populates="user",
     )
-
-    # UUID id
-    # String(64) name PK
-    # String(64) surname NULLABLE
-    # String(128) email
-    # Text password_hash
-    # ENUM role
-    # Timezone created_at
-    # Timezone updated_at
-
-    # UNIQUE(email)

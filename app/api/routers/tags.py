@@ -104,7 +104,7 @@ def update_tag(
     command = UpdateTagCommand(
         SqlAlchemyUnitOfWork(db)
     )
-    return command.exeucte(tag_id, tag_data)
+    return command.execute(tag_id, tag_data)
 
 @router.delete(
     "/{tag_id}",

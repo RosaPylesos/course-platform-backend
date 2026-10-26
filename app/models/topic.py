@@ -44,10 +44,3 @@ class Topic(Base):
     user_topics: Mapped[list["UserTopic"]] = relationship(
         back_populates="topic",
     )
-
-    # UUID id PK
-    # UUID parent_id FK
-    # String(64) name
-    # String(128) slug
-
-    # UNIQUE(slug)

@@ -39,22 +39,30 @@ class UpdateCourseCommand:
 
         update_data = course_data.model_dump(exclude_unset=True)
 
-        if (
-            "topic_id" in update_data 
-            and update_data["topic_id"] is None
-        ):
-            raise InvalidInputError("Topic cannot be null")
+        for field in ("topic_id", "name", "difficulty"):
+            if (
+                field in update_data 
+                and update_data[field] is None
+            ):
+                raise InvalidInputError(
+                    f"{field} cannot be null"
+                )
 
-        if (
-            "name" in update_data
-            and update_data["name"] is None
-        ):
-            raise InvalidInputError("Course name cannot be null")
-
-        for field, value in update_data.items():
-            setattr(course, field, value)
-
-        self.uow.commit()
-        self.uow.refresh(course)
-
+        if "topic_id" in update_data:
+            topic = self.uow.topics.get_by_id(
+                update_data["topic_id"]
+            )
+            if topic is None:
+                raise ResourceNotFoundError("Topic not found")
+        
+        try:
+            for field, value in update_data.items():
+                setattr(course, field, value)
+    
+            self.uow.commit()
+            self.uow.refresh(course)
+        except Exception:
+            self.uow.rollback()
+            raise
+        
         return course

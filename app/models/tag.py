@@ -38,10 +38,3 @@ class Tag(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-
-    # UUID id PK
-    # UUID tag_category_id FK
-    # String(64) name
-    # String(128) slug
-
-    # UNIQUE(slug)

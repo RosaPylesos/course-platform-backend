@@ -16,7 +16,7 @@ class CreateTagCommand:
     def execute(
         self,
         tag_data: TagCreate,
-    ) -> None:
+    ) -> Tag:
 
         category = self.uow.tag_categories.get_by_id(
             tag_data.tag_category_id

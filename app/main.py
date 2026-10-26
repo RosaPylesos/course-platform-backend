@@ -14,7 +14,7 @@ from app.api.routers.tags import router as tags_router
 from app.api.exception_handlers import (
     business_rule_handler,
     conflict_handler,
-    resourse_not_found_handler,
+    resource_not_found_handler,
     access_denied_handler,
     invalid_input_handler,
     invalid_credentials_handler,
@@ -36,7 +36,7 @@ logging.basicConfig(level=logging.INFO)
 
 app.add_exception_handler(
     ResourceNotFoundError,
-    resourse_not_found_handler,
+    resource_not_found_handler,
 )
 app.add_exception_handler(
     BusinessRuleError,

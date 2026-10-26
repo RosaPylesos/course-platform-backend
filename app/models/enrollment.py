@@ -60,12 +60,3 @@ class Enrollment(Base, TimestampMixin):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-
-    # UUID id PK
-    # UUID user_id FK
-    # UUID course_id FK
-    # ENUM status
-    # Timezone created_at
-    # Timezone updated_at
-
-    # UNIQUE(user_id, course_id)

@@ -18,7 +18,7 @@ class UpdateTagCommand:
     def __init__(self, uow: UnitOfWork) -> None:
         self.uow = uow
 
-    def exeucte(
+    def execute(
         self,
         tag_id: UUID,
         tag_data: TagUpdate

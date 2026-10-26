@@ -31,6 +31,35 @@ class UpdateTopicCommand:
 
         update_data = topic_data.model_dump(exclude_unset=True)
 
+        if "parent_id" in update_data:
+            parent_id = update_data["parent_id"]
+
+            if parent_id is not None:
+                if parent_id == topic_id:
+                    raise InvalidInputError(
+                        "A topic cannot be its own parent"
+                    )
+
+                parent = self.uow.topics.get_by_id(parent_id)
+
+                if parent is None:
+                    raise ResourceNotFoundError(
+                    "Parent topic not found"
+                    )
+
+                ancestor = parent
+
+                while ancestor is not None:
+                    if ancestor.id == topic_id:
+                        raise InvalidInputError(
+                            "A topic cannot have one of its descendants as its parent"
+                        )
+
+                    if ancestor.parent.id is None:
+                        break
+
+                    ancestor = self.uow.topics.get_by_id(ancestor.parent_id)
+
         if "name" in update_data:
             new_name = update_data.pop("name")
 

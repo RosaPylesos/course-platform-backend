@@ -24,13 +24,13 @@ class TagCategoryRepository(Protocol):
 
     def delete(
         self,
-        category_id: UUID,
+        category: TagCategory,
     ) -> None:
         ...
 
     def has_tags(
         self,
-        category: TagCategory,
+        category_id: UUID,
     ) -> bool:
         ...
 

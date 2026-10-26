@@ -31,6 +31,3 @@ class CourseTag(Base):
     tag: Mapped["Tag"] = relationship(
         back_populates="course_tags"
     )
-
-    # UUID course_id PK
-    # UUID tag_id PK

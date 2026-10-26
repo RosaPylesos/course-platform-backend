@@ -39,7 +39,7 @@ class AssignTagToCourseCommand:
             and course.author_id != current_user.id
         ):
             raise AccessDeniedError(
-                "You cannt manage tags for this course"
+                "You cannot manage tags for this course"
             )
 
         existing = self.uow.course_tags.get_by_ids(

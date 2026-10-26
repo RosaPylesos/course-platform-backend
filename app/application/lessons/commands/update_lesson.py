@@ -3,6 +3,7 @@ from uuid import UUID
 from app.application.exceptions import(
     AccessDeniedError,
     ResourceNotFoundError,
+    InvalidInputError,
 )
 from app.application.unit_of_work import UnitOfWork
 
@@ -48,11 +49,24 @@ class UpdateLessonCommand:
 
         update_data = lesson_data.model_dump(exclude_unset=True)
 
-        for field, value in update_data.items():
-            setattr(lesson, field, value)
+        if (
+            "name" in update_data 
+            and update_data["name"] is None
+        ):
+            raise InvalidInputError("Lesson name cannot be null")
+
+        if (
+            "content" in update_data
+            and update_data["content"] is None
+        ):
+            raise InvalidInputError("Lesson content cannot be null")
 
         try:
+            for field, value in update_data.items():
+                setattr(lesson, field, value)
+
             self.uow.commit()
+            self.uow.refresh(lesson)
         except Exception:
             self.uow.rollback()
             raise

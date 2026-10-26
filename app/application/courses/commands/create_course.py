@@ -23,8 +23,12 @@ class CreateCourseCommand:
             author_id=author_id,
         )
 
-        self.uow.courses.add(course)
-        self.uow.commit()
-        self.uow.refresh(course)
+        try:
+            self.uow.courses.add(course)
+            self.uow.commit()
+            self.uow.refresh(course)
+        except Exception:
+            self.uow.rollback()
+            raise
 
         return course

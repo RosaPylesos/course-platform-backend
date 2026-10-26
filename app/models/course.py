@@ -94,14 +94,3 @@ class Course(Base, TimestampMixin):
         "course_tags",
         "tag",
     )
-
-    # UUID id PK
-    # UUID author_id FK
-    # UUID topic_id FK
-    # String(64) name
-    # Text description NULLABLE
-    # ENUM status
-    # ENUM difficulty
-    # Text thumbnail_path NULLABLE
-    # Timezone created_at
-    # Timezone updated_at

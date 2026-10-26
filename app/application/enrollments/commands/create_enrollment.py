@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.application.unit_of_work import UnitOfWork
-from app.application.exceptions import(
+from app.application.exceptions import (
     BusinessRuleError,
     ConflictError,
     ResourceNotFoundError,
@@ -55,6 +55,7 @@ class CreateEnrollmentCommand:
         try:
             self.uow.enrollments.add(enrollment)
             self.uow.commit()
+            self.uow.refresh(enrollment)
         except Exception:
             self.uow.rollback()
             raise

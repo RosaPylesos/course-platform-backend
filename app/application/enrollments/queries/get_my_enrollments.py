@@ -12,7 +12,5 @@ class GetMyEnrollmentsQuery:
     ) -> None:
         self.enrollment_repository = enrollment_repository
 
-
-
     def execute(self, user_id: UUID) -> list[Enrollment]:
         return self.enrollment_repository.list_by_user(user_id)

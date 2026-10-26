@@ -1,9 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 
-from app.application.exceptions import (
-    ConflictError,
-    DuplicateEmailError,
-)
+from app.application.exceptions import DuplicateEmailError
 from app.application.unit_of_work import UnitOfWork
 
 from app.core.security import hash_password
@@ -28,7 +25,7 @@ class RegisterUserCommand:
         existing_user = self.uow.users.get_by_email(email)
 
         if existing_user is not None:
-            raise ConflictError("User with this email already exists")
+            raise DuplicateEmailError("User with this email already exists")
 
         user = User(
             name = user_data.name,

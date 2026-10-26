@@ -25,7 +25,7 @@ from app.infrastructure.enrollment_repository import(
 )
 from app.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 
-from app.schemas.enrollment import EntrollmentCreate, EnrollmentResponse
+from app.schemas.enrollment import EnrollmentCreate, EnrollmentResponse
 
 router = APIRouter(
     prefix="/enrollments",
@@ -52,7 +52,7 @@ def get_my_enrollments(
     status_code=status.HTTP_201_CREATED,
 )
 def create_enrollment(
-    enrollment_data: EntrollmentCreate,
+    enrollment_data: EnrollmentCreate,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:

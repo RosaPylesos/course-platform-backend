@@ -44,10 +44,9 @@ class ArchiveCourseCommand:
         try:
             course.status = CourseStatus.ARCHIVED
             self.uow.commit()
+            self.uow.refresh(course)
         except Exception:
             self.uow.rollback()
             raise
-
-        self.uow.refresh(course)
 
         return course

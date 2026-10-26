@@ -49,12 +49,3 @@ class LessonProgress(Base, TimestampMixin):
     lesson: Mapped["Lesson"] = relationship(
         back_populates="lesson_progress",
     )
-    
-    # UUID id PK
-    # UUID enrollment_id FK
-    # UUID lesson_id FK
-    # BOOL is_completed
-    # Timezone created_at
-    # Timezone updated_at
-
-    # UNIQUE(enrollment_id, lesson_id)

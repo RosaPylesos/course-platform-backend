@@ -27,9 +27,3 @@ class TagCategory(Base):
     tags: Mapped[list["Tag"]] = relationship(
         back_populates="category",
     )
-    
-    # UUID id PK
-    # String(64) name
-    # String(128) slug
-
-    # UNIQUE(slug)

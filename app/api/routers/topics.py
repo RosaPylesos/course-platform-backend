@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db
+from app.api.dependencies import get_db, require_roles
 
 from app.application.topics.queries import (
     GetTopicsQuery,
@@ -25,6 +25,8 @@ from app.infrastructure.unit_of_work import (
 )
 
 from app.models.topic import Topic
+from app.models.user import User
+from app.models.enums import UserRole
 
 from app.schemas.topic import (
     TopicCreate, 
@@ -74,6 +76,10 @@ def get_topic(
 def create_topic(
     topic_data: TopicCreate,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles(UserRole.ADMIN)),
+    ],
 ) -> Topic:
 
     command = CreateTopicCommand(
@@ -90,6 +96,10 @@ def update_topic(
     topic_id: UUID,
     topic_data: TopicUpdate,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles(UserRole.ADMIN)),
+    ],
 ) -> Topic:
 
     command = UpdateTopicCommand(
@@ -107,6 +117,10 @@ def update_topic(
 def delete_topic(
     topic_id: UUID,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles(UserRole.ADMIN)),
+    ],
 ) -> None:
     
     command = DeleteTopicCommand(

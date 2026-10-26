@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import EnrollmentStatus
 
-class EntrollmentCreate(BaseModel):
+class EnrollmentCreate(BaseModel):
     course_id: UUID
 
 class EnrollmentResponse(BaseModel):

@@ -41,7 +41,7 @@ class CreateLessonCommand:
             and course.author_id != user.id
         ):
             raise AccessDeniedError(
-                "You can only add lessonds to your own courses"
+                "You can only add lessons to your own courses"
             )
 
         max_position = self.uow.lessons.get_max_position_by_course(
@@ -66,6 +66,7 @@ class CreateLessonCommand:
                         enrollment.status = EnrollmentStatus.ACTIVE
 
             self.uow.commit()
+            self.uow.refresh(lesson)
         except Exception:
             self.uow.rollback()
             raise
