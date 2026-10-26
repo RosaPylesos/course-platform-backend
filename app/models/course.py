@@ -8,6 +8,7 @@ from sqlalchemy import (
 )
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from app.models.base import Base, TimestampMixin
 from app.models.enums import CourseDifficulty, CourseStatus
@@ -72,6 +73,8 @@ class Course(Base, TimestampMixin):
 
     course_tags: Mapped[list["CourseTag"]] = relationship(
         back_populates="course",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     enrollments: Mapped[list["Enrollment"]] = relationship(
@@ -85,6 +88,11 @@ class Course(Base, TimestampMixin):
         order_by="Lesson.position",
         cascade="all, delete-orphan",
         passive_deletes=True,
+    )
+
+    tags = association_proxy(
+        "course_tags",
+        "tag",
     )
 
     # UUID id PK

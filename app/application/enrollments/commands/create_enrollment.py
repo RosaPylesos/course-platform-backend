@@ -19,8 +19,6 @@ class CreateEnrollmentCommand:
     ) -> None:
         self.uow = uow
 
-
-
     def execute(
         self,
         user_id: UUID,

@@ -6,6 +6,9 @@ from app.application.lessons.repository import LessonRepository
 from app.application.lesson_progress.repository import LessonProgressRepository
 from app.application.topics.repository import TopicRepository
 from app.application.users.repository import UserRepository
+from app.application.tag_categories.repository import TagCategoryRepository
+from app.application.tags.repository import TagRepository
+from app.application.course_tags.repository import CourseTagRepository
 
 
 
@@ -16,6 +19,9 @@ class UnitOfWork(Protocol):
     lesson_progress: LessonProgressRepository
     topics: TopicRepository
     users: UserRepository
+    tag_categories: TagCategoryRepository
+    tags: TagRepository
+    course_tags: CourseTagRepository
 
     def commit(self) -> None:
         ...

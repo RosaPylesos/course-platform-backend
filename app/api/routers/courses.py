@@ -25,6 +25,12 @@ from app.application.courses.commands import (
     CreateCourseCommand,
     UpdateCourseCommand,
     DeleteCourseCommand,
+    PublishCourseCommand,
+    ArchiveCourseCommand,
+)
+from app.application.course_tags.commands import(
+    AssignTagToCourseCommand,
+    UnassignTagFromCourseCommand,
 )
 
 from app.infrastructure.course_repository import (
@@ -152,6 +158,60 @@ def update_course(
         current_user=current_user
     )
 
+@router.post(
+    "/{course_id}/publish",
+    response_model=CourseResponse,
+    status_code=status.HTTP_200_OK,
+)
+def publish_course(
+    course_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        )
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> Course:
+
+    command = PublishCourseCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    return command.execute(
+        course_id=course_id,
+        current_user=current_user,
+    )
+
+@router.post(
+    "/{course_id}/archive",
+    response_model=CourseResponse,
+    status_code=status.HTTP_200_OK,
+)
+def archive_course(
+    course_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        ),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> Course:
+
+    command = ArchiveCourseCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    return command.execute(
+        course_id=course_id,
+        current_user=current_user,
+    )
+
 @router.delete("/{course_id}", status_code=204)
 def delete_course(
     course_id: UUID,
@@ -171,5 +231,59 @@ def delete_course(
     )
     command.execute(
         course_id=course_id,
+        current_user=current_user,
+    )
+
+@router.post(
+    "/{course_id}/tags/{tag_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def assign_tag_to_course(
+    course_id: UUID,
+    tag_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+        )),
+    ],
+) -> None:
+
+    command = AssignTagToCourseCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    command.execute(
+        course_id=course_id,
+        tag_id=tag_id,
+        current_user=current_user,
+    )
+
+@router.delete(
+    "/{course_id}/tags/{tag_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def unassign_tag_from_course(
+    course_id: UUID,
+    tag_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+        )),
+    ],
+) -> None:
+
+    command = UnassignTagFromCourseCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    command.execute(
+        course_id=course_id,
+        tag_id=tag_id,
         current_user=current_user,
     )

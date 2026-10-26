@@ -5,6 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import CourseDifficulty, CourseStatus
 
+from app.schemas.tag import TagResponse
+
 class CourseCreate(BaseModel):
     topic_id: UUID
     name: str = Field(min_length=1, max_length=64)
@@ -34,5 +36,6 @@ class CourseResponse(BaseModel):
     thumbnail_path: str | None
     created_at: datetime
     updated_at: datetime
+    tags: list[TagResponse] = []
     
     model_config = ConfigDict(from_attributes=True)

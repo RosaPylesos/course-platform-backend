@@ -4,3 +4,5 @@ from app.infrastructure.lesson_progress_repository import SqlAlchemyLessonProgre
 from app.infrastructure.lesson_repository import SqlAlchemyLessonRepository
 from app.infrastructure.topic_repository import SqlAlchemyTopicRepository
 from app.infrastructure.user_repository import SqlAlchemyUserRepository
+from app.infrastructure.tag_category_repository import SqlAlchemyTagCategoryRepository
+from app.infrastructure.tag_repository import SqlAlchemyTagRepository

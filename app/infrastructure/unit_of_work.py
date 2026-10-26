@@ -8,6 +8,9 @@ from app.infrastructure.course_repository import SqlAlchemyCourseRepository
 from app.infrastructure.enrollment_repository import SqlAlchemyEnrollmentRepository
 from app.infrastructure.lesson_progress_repository import SqlAlchemyLessonProgressRepository
 from app.infrastructure.lesson_repository import SqlAlchemyLessonRepository
+from app.infrastructure.tag_category_repository import SqlAlchemyTagCategoryRepository
+from app.infrastructure.tag_repository import SqlAlchemyTagRepository
+from app.infrastructure.course_tag_repository import SqlAlchemyCourseTagRepository
 
 
 
@@ -19,6 +22,9 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.lesson_progress = SqlAlchemyLessonProgressRepository(db)
         self.topics = SqlAlchemyTopicRepository(db)
         self.users = SqlAlchemyUserRepository(db)
+        self.tag_categories = SqlAlchemyTagCategoryRepository(db)
+        self.tags = SqlAlchemyTagRepository(db)
+        self.course_tags = SqlAlchemyCourseTagRepository(db)
         self.db = db
 
     def commit(self) -> None:

@@ -35,6 +35,8 @@ class Tag(Base):
 
     course_tags: Mapped[list["CourseTag"]] = relationship(
         back_populates="tag",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     # UUID id PK
