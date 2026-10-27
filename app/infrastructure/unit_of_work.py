@@ -11,6 +11,7 @@ from app.infrastructure.lesson_repository import SqlAlchemyLessonRepository
 from app.infrastructure.tag_category_repository import SqlAlchemyTagCategoryRepository
 from app.infrastructure.tag_repository import SqlAlchemyTagRepository
 from app.infrastructure.course_tag_repository import SqlAlchemyCourseTagRepository
+from app.infrastructure.user_topic_repository import SqlAlchemyUserTopicRepository
 
 
 
@@ -25,6 +26,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.tag_categories = SqlAlchemyTagCategoryRepository(db)
         self.tags = SqlAlchemyTagRepository(db)
         self.course_tags = SqlAlchemyCourseTagRepository(db)
+        self.user_topics = SqlAlchemyUserTopicRepository(db)
         self.db = db
 
     def commit(self) -> None:

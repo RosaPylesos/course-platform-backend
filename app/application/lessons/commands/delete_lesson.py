@@ -46,7 +46,26 @@ class DeleteLessonCommand:
             self.uow.lessons.delete(lesson)
             self.uow.flush()
 
-            lesson_total = self.uow.lessons.count_by_course(course_id)
+            remaining_lessons = self.uow.lessons.list_by_course(course_id)
+
+            max_position = max(
+                (item.position for item in remaining_lessons),
+                default=0,
+            )
+            offset = max_position + len(remaining_lessons) + 1
+
+            for item in remaining_lessons:
+                item.position += offset
+
+            self.uow.flush()
+
+            for position, item in enumerate(
+                remaining_lessons,
+                start=1,
+            ):
+                item.position = position
+
+            lesson_total = len(remaining_lessons)
 
             if lesson_total > 0:
                 enrollments = self.uow.enrollments.list_by_course(course_id)

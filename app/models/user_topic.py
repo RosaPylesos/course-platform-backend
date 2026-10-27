@@ -31,6 +31,3 @@ class UserTopic(Base):
     topic: Mapped["Topic"] = relationship(
         back_populates="user_topics",
     )
-
-    # UUID user_id PK
-    # UUID topic_id PK

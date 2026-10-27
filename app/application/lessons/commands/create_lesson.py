@@ -50,7 +50,7 @@ class CreateLessonCommand:
         next_position = (max_position or 0) + 1
 
         lesson = Lesson(
-            **lesson_data.model_dump(),
+            **lesson_data.model_dump(mode="json"),
             course_id=course_id,
             position=next_position,
         )

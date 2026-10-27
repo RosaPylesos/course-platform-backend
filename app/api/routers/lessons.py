@@ -17,6 +17,7 @@ from app.application.lessons.commands import (
     DeleteLessonCommand,
     StartLessonCommand,
     CompleteLessonCommand,
+    ReorderLessonsCommand,
 )
 from app.application.events.setup import event_dispatcher
 
@@ -30,7 +31,8 @@ from app.models.enums import UserRole
 from app.schemas.lesson import (
     LessonCreate, 
     LessonResponse, 
-    LessonUpdate
+    LessonUpdate,
+    LessonReorder
 )
 from app.schemas.lesson_progress import LessonProgressResponse
 
@@ -150,6 +152,33 @@ def create_lesson(
     return command.execute(
         course_id=course_id,
         lesson_data=lesson_data,
+        user=current_user,
+    )
+
+@router.patch(
+    "/reorder",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def reorder_lessons(
+    course_id: UUID,
+    reorder_data: LessonReorder,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        ),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+    command = ReorderLessonsCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    command.execute(
+        course_id=course_id,
+        lesson_ids=reorder_data.lesson_ids,
         user=current_user,
     )
 

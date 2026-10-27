@@ -9,6 +9,7 @@ from app.application.users.repository import UserRepository
 from app.application.tag_categories.repository import TagCategoryRepository
 from app.application.tags.repository import TagRepository
 from app.application.course_tags.repository import CourseTagRepository
+from app.application.user_topics.repository import UserTopicRepository
 
 
 
@@ -22,6 +23,7 @@ class UnitOfWork(Protocol):
     tag_categories: TagCategoryRepository
     tags: TagRepository
     course_tags: CourseTagRepository
+    user_topics: UserTopicRepository
 
     def commit(self) -> None:
         ...

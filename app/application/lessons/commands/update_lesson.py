@@ -47,7 +47,10 @@ class UpdateLessonCommand:
         if lesson is None:
             raise ResourceNotFoundError("Lesson not found")
 
-        update_data = lesson_data.model_dump(exclude_unset=True)
+        update_data = lesson_data.model_dump(
+            exclude_unset=True,
+            mode="json"
+        )
 
         if (
             "name" in update_data 

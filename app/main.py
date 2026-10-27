@@ -9,6 +9,7 @@ from app.api.routers.users import router as users_router
 from app.api.routers.enrollments import router as enrollments_router
 from app.api.routers.tag_categories import router as tag_categories_router
 from app.api.routers.tags import router as tags_router
+from app.api.routers.user_topics import router as user_topics_router
 
 #EXCEPTIONS AND HANDLERS
 from app.api.exception_handlers import (
@@ -75,3 +76,4 @@ app.include_router(enrollments_router)
 app.include_router(topics_router)
 app.include_router(tag_categories_router)
 app.include_router(tags_router)
+app.include_router(user_topics_router)
