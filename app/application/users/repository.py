@@ -19,6 +19,9 @@ class UserRepository(Protocol):
     ) -> User | None:
         ...
 
+    def list_all(self) -> list[User]:
+        ...
+
     def add(
         self,
         user: User

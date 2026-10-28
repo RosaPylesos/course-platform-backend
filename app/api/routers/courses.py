@@ -20,6 +20,9 @@ from app.application.courses.queries import (
     GetCoursesQuery,
     GetCourseQuery,
     GetCourseProgressQuery,
+    GetMyCoursesQuery,
+    GetAllCoursesQuery,
+    GetMyCourseQuery,
 )
 from app.application.courses.commands import (
     CreateCourseCommand,
@@ -62,6 +65,76 @@ def get_courses(
 ) -> list[Course]:
     
     query = GetCoursesQuery(
+        SqlAlchemyCourseRepository(db)
+    )
+    return query.execute()
+
+@router.get(
+    "/my",
+    response_model=list[CourseResponse],
+    status_code=status.HTTP_200_OK,
+)
+def get_my_courses(
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        ),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[Course]:
+
+    query = GetMyCoursesQuery(
+        SqlAlchemyCourseRepository(db)
+    )
+    return query.execute(
+        author_id=current_user.id,
+    )
+
+@router.get(
+    "/my/{course_id}",
+    response_model=CourseResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_my_course(
+    course_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(
+                UserRole.AUTHOR,
+                UserRole.ADMIN,
+            )
+        )
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> Course:
+
+    query = GetMyCourseQuery(
+        SqlAlchemyCourseRepository(db)
+    )
+    return query.execute(
+        course_id=course_id,
+        author_id=current_user.id,
+    )
+
+@router.get(
+    "/manage",
+    response_model=list[CourseResponse],
+    status_code=status.HTTP_200_OK,
+)
+def get_all_courses(
+    current_user: Annotated[
+        User,
+        Depends(require_roles(UserRole.ADMIN)),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[Course]:
+
+    query = GetAllCoursesQuery(
         SqlAlchemyCourseRepository(db)
     )
     return query.execute()

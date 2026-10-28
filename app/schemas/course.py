@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.enums import CourseDifficulty, CourseStatus
 
 from app.schemas.tag import TagResponse
+from app.schemas.topic import TopicResponse
+from app.schemas.author import CourseAuthorResponse
 
 class CourseCreate(BaseModel):
     topic_id: UUID
@@ -19,7 +21,7 @@ class CourseUpdate(BaseModel):
     name: str | None = Field(
         default=None,
         min_length=1,
-        max_length=64
+        max_length=64,
     )
     description: str | None = None
     difficulty: CourseDifficulty | None = None
@@ -36,6 +38,23 @@ class CourseResponse(BaseModel):
     thumbnail_path: str | None
     created_at: datetime
     updated_at: datetime
-    tags: list[TagResponse] = []
+    tags: list[TagResponse] = Field(
+        default_factory=list
+    )
     
+    model_config = ConfigDict(from_attributes=True)
+
+class CourseListItemResponse(BaseModel):
+    id: UUID
+    name: str
+    description: str | None
+    difficulty: CourseDifficulty
+    thumbnail_path: str | None
+    author: CourseAuthorResponse
+    topic: TopicResponse
+    tags: list[TagResponse] = Field(
+        default_factory=list
+    )
+    lesson_count: int
+
     model_config = ConfigDict(from_attributes=True)

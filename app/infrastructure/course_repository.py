@@ -14,10 +14,30 @@ class SqlAlchemyCourseRepository(CourseRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def list_all(self) -> list[Course]:
+
+        statement = (
+            select(Course)
+            .order_by(Course.created_at.desc(), Course.id)
+        )
+        return list(self.db.scalars(statement).all())
+
     def list_published(self) -> list[Course]:
 
         statement = select(Course).where(
             Course.status == CourseStatus.PUBLISHED
+        )
+        return list(self.db.scalars(statement).all())
+
+    def list_by_author(
+        self,
+        author_id: UUID
+    ) -> list[Course]:
+
+        statement = (
+            select(Course)
+            .where(Course.author_id == author_id)
+            .order_by(Course.created_at.desc(), Course.id)
         )
         return list(self.db.scalars(statement).all())
 

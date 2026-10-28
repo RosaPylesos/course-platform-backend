@@ -1,17 +1,24 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db, get_current_user
+from app.api.dependencies import (
+    get_db, 
+    get_current_user,
+    require_roles,
+)
 
 from app.application.users.queries import (
     AuthenticateUserQuery,
+    ListUsersQuery,
 )
 from app.application.users.commands import (
     RegisterUserCommand,
+    AssignAuthorRoleCommand,
 )
 
 from app.infrastructure.user_repository import(
@@ -22,6 +29,7 @@ from app.infrastructure.unit_of_work import (
 )
 
 from app.models.user import User
+from app.models.enums import UserRole
 from app.schemas.user import (
     UserRegister, 
     UserResponse,
@@ -96,3 +104,42 @@ def get_me(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     return current_user
+
+@router.get(
+    "/",
+    response_model=list[UserResponse],
+    status_code=status.HTTP_200_OK,
+)
+def list_users(
+    current_user: Annotated[
+        User,
+        Depends(require_roles(UserRole.ADMIN)),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[User]:
+
+    query = ListUsersQuery(
+        SqlAlchemyUserRepository(db)
+    )
+    return query.execute()
+
+@router.patch(
+    "/{user_id}/role",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def assign_author_role(
+    user_id: UUID,
+    current_user: Annotated[
+        User,
+        Depends(require_roles(UserRole.ADMIN)),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+
+    command = AssignAuthorRoleCommand(
+        SqlAlchemyUnitOfWork(db)
+    )
+    command.execute(
+        user_id=user_id,
+        current_user=current_user,
+    )

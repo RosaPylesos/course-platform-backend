@@ -7,7 +7,16 @@ from app.models.course import Course
 
 class CourseRepository(Protocol):
 
+    def list_all(self) -> list[Course]:
+        ...
+
     def list_published(self) -> list[Course]:
+        ...
+
+    def list_by_author(
+        self,
+        author_id: UUID
+    ) -> list[Course]:
         ...
 
     def get_by_id(self, course_id: UUID) -> Course | None:
