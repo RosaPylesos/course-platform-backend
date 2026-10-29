@@ -74,3 +74,10 @@ class SqlAlchemyTopicRepository(TopicRepository):
             statement = statement.where(Topic.id != exclude_topic_id)
 
         return self.db.scalar(statement) is not None
+
+    def get_by_slug(
+        self,
+        slug: str,
+    ) -> Topic | None:
+        statement = select(Topic).where(Topic.slug == slug)
+        return self.db.scalar(statement)

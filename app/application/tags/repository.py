@@ -28,3 +28,6 @@ class TagRepository(Protocol):
         slug: str,
         exclude_tag_id: UUID | None = None,
     ) -> bool: ...
+
+    def get_by_slug(self, slug: str) -> Tag | None:
+        ...

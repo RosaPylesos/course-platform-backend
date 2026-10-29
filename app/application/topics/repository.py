@@ -46,3 +46,9 @@ class TopicRepository(Protocol):
         exclude_topic_id: UUID | None = None,
     ) -> bool:
         ...
+
+    def get_by_slug(
+        self,
+        slug: str,
+    ) -> Topic | None:
+        ...

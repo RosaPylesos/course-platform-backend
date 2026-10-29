@@ -2,19 +2,33 @@ from uuid import UUID
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import (
+    APIRouter, 
+    Depends, 
+    status, 
+    Query,
+)
 from sqlalchemy.orm import Session
+
+from app.api.schemas.course_catalog import CourseCatalogParams
+from app.api.deps.course_catalog import (
+    get_course_catalog_query,
+)
 
 from app.api.dependencies import (
     get_db, 
     require_roles, 
     get_current_user
 )
+from app.api.mappers.course_mapper import (
+    to_course_list_item_response,
+    to_course_catalog_filters_response,
+)
 
 from app.models.course import Course
 from app.models.user import User
 
-from app.models.enums import UserRole
+from app.models.enums import UserRole, CourseDifficulty
 
 from app.application.courses.queries import (
     GetCoursesQuery,
@@ -23,6 +37,8 @@ from app.application.courses.queries import (
     GetMyCoursesQuery,
     GetAllCoursesQuery,
     GetMyCourseQuery,
+    GetCourseCatalogFiltersQuery,
+    GetCoursesInput,
 )
 from app.application.courses.commands import (
     CreateCourseCommand,
@@ -46,7 +62,9 @@ from app.infrastructure.unit_of_work import (
 from app.schemas.course import (
     CourseResponse, 
     CourseCreate, 
-    CourseUpdate
+    CourseUpdate,
+    CourseListResponse,
+    CourseCatalogFiltersResponse,
 )
 from app.schemas.lesson_progress import CourseProgressResponse
 
@@ -57,17 +75,57 @@ router = APIRouter(
 
 @router.get(
     "/", 
-    response_model=list[CourseResponse],
+    response_model=CourseListResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_courses(
-    db: Annotated[Session, Depends(get_db)],
-) -> list[Course]:
-    
-    query = GetCoursesQuery(
-        SqlAlchemyCourseRepository(db)
+    query: Annotated[
+        GetCoursesQuery,
+        Depends(get_course_catalog_query)
+    ],
+    params: Annotated[
+        CourseCatalogParams, Depends()
+    ],
+) -> CourseListResponse:
+
+    input = GetCoursesInput(
+        page=params.page,
+        page_size=params.page_size,
+        search=params.search,
+        author_id=params.author_id,
+        topics=params.topics,
+        tags=params.tags,
+        include_descendants=params.include_descendants,
+        difficulty=params.difficulty,
     )
-    return query.execute()
+    
+    items, total = query.execute(input)
+    return CourseListResponse(
+        items = [
+        to_course_list_item_response(item)
+        for item in items
+    ],
+    total=total,
+    page=params.page,
+    page_size=params.page_size,
+    total_pages=(total+params.page_size - 1) // params.page_size,
+    )
+
+@router.get(
+    "/filters",
+    response_model=CourseCatalogFiltersResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_course_catalog_filters(
+    db: Annotated[Session,Depends(get_db)],
+) -> CourseCatalogFiltersResponse:
+
+    query = GetCourseCatalogFiltersQuery(
+        SqlAlchemyCourseRepository(db),
+    )
+
+    filters = query.execute()
+    return to_course_catalog_filters_response(filters)
 
 @router.get(
     "/my",

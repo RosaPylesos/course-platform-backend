@@ -58,3 +58,37 @@ class CourseListItemResponse(BaseModel):
     lesson_count: int
 
     model_config = ConfigDict(from_attributes=True)
+
+class CourseListResponse(BaseModel):
+    items: list[CourseListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+class CatalogFilterAuthorResponse(BaseModel):
+    id: UUID
+    name: str
+    surname: str | None
+
+class CatalogFilterTopicResponse(BaseModel):
+    id: UUID
+    name: str
+    parent_id: UUID | None
+    slug: str
+
+class CatalogFilterTagResponse(BaseModel):
+    id: UUID
+    name: str
+    slug: str
+
+class CatalogFilterTagCategoryResponse(BaseModel):
+    id: UUID
+    name: str
+    tags: list[CatalogFilterTagResponse]
+
+class CourseCatalogFiltersResponse(BaseModel):
+    authors: list[CatalogFilterAuthorResponse]
+    topics: list[CatalogFilterTopicResponse]
+    tag_categories: list[CatalogFilterTagCategoryResponse]
+    difficulties: list[CourseDifficulty]

@@ -64,3 +64,8 @@ class SqlAlchemyTagRepository(TagRepository):
             statement = statement.where(Tag.id != exclude_tag_id)
 
         return self.db.scalar(statement) is not None
+
+    def get_by_slug(self, slug: str) -> Tag | None:
+
+        statement = select(Tag).where(Tag.slug == slug)
+        return self.db.scalar(statement)
