@@ -6,5 +6,5 @@ from app.models.course import Course
 
 @dataclass(frozen=True)
 class CourseListItem:
-    course:Course
+    course: Course
     lesson_count: int

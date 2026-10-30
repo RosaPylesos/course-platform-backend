@@ -28,7 +28,7 @@ from app.api.mappers.course_mapper import (
 from app.models.course import Course
 from app.models.user import User
 
-from app.models.enums import UserRole, CourseDifficulty
+from app.models.enums import UserRole
 
 from app.application.courses.queries import (
     GetCoursesQuery,
@@ -64,6 +64,7 @@ from app.schemas.course import (
     CourseCreate, 
     CourseUpdate,
     CourseListResponse,
+    CourseListItemResponse,
     CourseCatalogFiltersResponse,
 )
 from app.schemas.lesson_progress import CourseProgressResponse
@@ -84,7 +85,7 @@ def get_courses(
         Depends(get_course_catalog_query)
     ],
     params: Annotated[
-        CourseCatalogParams, Depends()
+        CourseCatalogParams, Query()
     ],
 ) -> CourseListResponse:
 
@@ -92,11 +93,11 @@ def get_courses(
         page=params.page,
         page_size=params.page_size,
         search=params.search,
-        author_id=params.author_id,
+        author_ids=params.author_ids,
         topics=params.topics,
         tags=params.tags,
         include_descendants=params.include_descendants,
-        difficulty=params.difficulty,
+        difficulties=params.difficulties,
     )
     
     items, total = query.execute(input)
@@ -199,18 +200,19 @@ def get_all_courses(
 
 @router.get(
     "/{course_id}", 
-    response_model=CourseResponse,
+    response_model=CourseListItemResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_course(
     course_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-) -> Course:
+) -> CourseListItemResponse:
     
     query = GetCourseQuery(
         SqlAlchemyCourseRepository(db)
     )
-    return query.execute(course_id=course_id)
+    item = query.execute(course_id=course_id)
+    return to_course_list_item_response(item)
 
 @router.get(
     "/{course_id}/progress",

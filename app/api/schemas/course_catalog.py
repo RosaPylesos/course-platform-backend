@@ -19,7 +19,9 @@ class CourseCatalogParams(BaseModel):
         default=None,
         max_length=100,
     )
-    author_id: UUID | None = None
+    author_ids: list[UUID] | None = Field(
+        default=None,
+    )
     topics: str | None = Field(
         default=None,
         max_length=500,
@@ -29,4 +31,6 @@ class CourseCatalogParams(BaseModel):
         max_length=500,
     )
     include_descendants: bool = False
-    difficulty: CourseDifficulty | None = None
+    difficulties: list[CourseDifficulty] | None = Field(
+        default=None,
+    )

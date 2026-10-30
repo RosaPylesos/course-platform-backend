@@ -7,6 +7,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db
+from app.api.mappers.enrollment_mapper import (
+    to_my_enrollments_response,
+)
 
 from app.models.enrollment import Enrollment
 from app.models.user import User
@@ -25,7 +28,11 @@ from app.infrastructure.enrollment_repository import(
 )
 from app.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 
-from app.schemas.enrollment import EnrollmentCreate, EnrollmentResponse
+from app.schemas.enrollment import (
+    EnrollmentCreate, 
+    EnrollmentResponse,
+    MyEnrollmentsResponse,
+)
 
 router = APIRouter(
     prefix="/enrollments",
@@ -34,17 +41,18 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[EnrollmentResponse],
+    response_model=MyEnrollmentsResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_my_enrollments(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-) -> list[Enrollment]:
+) -> MyEnrollmentsResponse:
 
-    return GetMyEnrollmentsQuery(
+    view = GetMyEnrollmentsQuery(
         SqlAlchemyEnrollmentRepository(db)
     ).execute(current_user.id)
+    return to_my_enrollments_response(view)
 
 @router.post(
     "/",

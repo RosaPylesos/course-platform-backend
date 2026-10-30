@@ -4,7 +4,8 @@ from uuid import UUID
 from app.application.courses.views import (
     CourseCatalogFilters,
     CourseListItem,
-) 
+    HomePageSection,
+)
 
 from app.models.course import Course
 from app.models.enums import CourseDifficulty
@@ -17,6 +18,14 @@ class CourseRepository(Protocol):
         ...
 
     def list_published(self) -> list[Course]:
+        ...
+
+    def get_home_page_sections(
+        self,
+        preferred_topic_ids: list[UUID] | None = None,
+        limit_topics: int = 5,
+        courses_per_topic: int = 5,
+    ) -> list[HomePageSection]:
         ...
 
     def list_published_for_catalog(
@@ -42,6 +51,9 @@ class CourseRepository(Protocol):
         ...
 
     def get_by_id(self, course_id: UUID) -> Course | None:
+        ...
+
+    def get_detail(self, course_id: UUID) -> Course | None:
         ...
 
     def add(self, course: Course) -> None:

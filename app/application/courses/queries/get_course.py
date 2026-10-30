@@ -5,8 +5,10 @@ from app.application.exceptions import (
     AccessDeniedError,
     ResourceNotFoundError
 )
+from app.application.courses.views.course_list_item import (
+    CourseListItem
+)
 
-from app.models.course import Course
 from app.models.enums import CourseStatus
 
 
@@ -18,14 +20,13 @@ class GetCourseQuery:
     def execute(
         self,
         course_id: UUID
-    ) -> Course:
-
-        course = self.repository.get_by_id(course_id)
+    ) -> CourseListItem:
+        course = self.repository.get_detail(course_id)
 
         if course is None:
             raise ResourceNotFoundError("Course not found")
 
-        if course.status != CourseStatus.PUBLISHED:
+        if course.course.status != CourseStatus.PUBLISHED:
             raise AccessDeniedError(
                 "This course is not published yet"
             )

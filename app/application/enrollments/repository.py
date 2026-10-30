@@ -3,6 +3,8 @@ from uuid import UUID
 
 from app.models.enrollment import Enrollment
 
+from app.application.enrollments.views import MyEnrollmentItem
+
 
 
 class EnrollmentRepository(Protocol):
@@ -11,6 +13,12 @@ class EnrollmentRepository(Protocol):
         self, 
         user_id: UUID
     ) -> list[Enrollment]:
+        ...
+
+    def list_by_user_with_progress(
+        self,
+        user_id: UUID
+    ) -> list[MyEnrollmentItem]:
         ...
 
     def list_by_course(

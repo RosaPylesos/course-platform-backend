@@ -10,6 +10,7 @@ from app.api.routers.enrollments import router as enrollments_router
 from app.api.routers.tag_categories import router as tag_categories_router
 from app.api.routers.tags import router as tags_router
 from app.api.routers.user_topics import router as user_topics_router
+from app.api.routers.home_page import router as home_page_router
 
 #EXCEPTIONS AND HANDLERS
 from app.api.exception_handlers import (
@@ -69,6 +70,7 @@ def startup():
 def root():
     return {"message": "Course Platform API is running"}
 
+app.include_router(home_page_router)
 app.include_router(users_router)
 app.include_router(courses_router)
 app.include_router(lessons_router)

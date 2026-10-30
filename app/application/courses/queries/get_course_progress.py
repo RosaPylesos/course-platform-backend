@@ -63,6 +63,7 @@ class GetCourseProgressQuery:
             LessonProgressItem(
                 lesson_id=lesson.id,
                 lesson_name=lesson.name,
+                position=lesson.position,
                 is_started=lesson.id in progress_by_lesson_id,
                 is_completed=(
                     progress_by_lesson_id[lesson.id].is_completed
@@ -80,6 +81,10 @@ class GetCourseProgressQuery:
 
         return CourseProgressResponse(
             course_id=course.id,
+            course_name=course.name,
+            course_status=course.status,
+            course_difficulty=course.difficulty,
+            thumbnail_path=course.thumbnail_path,
             lessons_total=len(lessons),
             lessons_started=lessons_started,
             lessons_completed=lessons_completed,

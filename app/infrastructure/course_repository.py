@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select, func, exists
+from sqlalchemy import select, func, exists, case
 from sqlalchemy.orm import Session, selectinload, aliased
 
 from app.application.courses.repository import CourseRepository
@@ -11,6 +11,7 @@ from app.application.courses.views import (
     CatalogFilterAuthor,
     CatalogFilterTag,
     CourseListItem,
+    HomePageSection,
 )
 
 from app.models.enums import CourseStatus, CourseDifficulty
@@ -43,15 +44,155 @@ class SqlAlchemyCourseRepository(CourseRepository):
         )
         return list(self.db.scalars(statement).all())
 
+    def get_home_page_sections(
+        self,
+        preferred_topic_ids: list[UUID] | None = None,
+        limit_topics: int = 5,
+        courses_per_topic: int = 5,
+    ) -> list[HomePageSection]:
+
+        # Topic counts
+        topic_counts = (
+            select(
+                Course.topic_id,
+                func.count(Course.id).label("course_count"),
+            )
+            .where(Course.status == CourseStatus.PUBLISHED)
+            .group_by(Course.topic_id)
+            .subquery()
+        )
+
+        # Popular + Preferred Topics
+        topic_statement = (
+            select(
+                Topic,
+                topic_counts.c.course_count,
+            )
+            .join(
+                topic_counts,
+                topic_counts.c.topic_id == Topic.id,
+            )
+            .order_by(
+            topic_counts.c.course_count.desc(), 
+            Topic.name
+            )
+        )
+
+        preferred_ids = list(
+            dict.fromkeys(preferred_topic_ids or [])
+        )
+
+        preferred_topics = []
+        if preferred_ids:
+            preferred_topics = self.db.execute(
+                topic_statement
+                .where(Topic.id.in_(preferred_ids))
+            ).all()
+
+        popular_topics = self.db.execute(
+            topic_statement
+            .where(
+                Topic.id.not_in(preferred_ids)
+                if preferred_ids else True
+            )
+            .limit(limit_topics)
+        ).all()
+
+        selected_topics = preferred_topics + popular_topics
+
+        # Course amount limitation per topic
+        selected_topic_ids = [
+            topic.id for topic, _ in selected_topics
+        ]
+
+        if not selected_topic_ids:
+            return []
+
+        ranked_courses = (
+            select(
+                Course.id.label("course_id"),
+                func.row_number()
+                .over(
+                    partition_by=Course.topic_id,
+                    order_by=(
+                        Course.created_at.desc(),
+                        Course.id,
+                    ),
+                )
+                .label("row_number"),
+            )
+            .where(
+                Course.status == CourseStatus.PUBLISHED,
+                Course.topic_id.in_(selected_topic_ids),
+            )
+            .subquery()
+        )
+
+        lesson_count = (
+            select(func.count(Lesson.id))
+            .where(Lesson.course_id == Course.id)
+            .correlate(Course)
+            .scalar_subquery()
+        )
+
+        course_statement = (
+            select(
+                Course,
+                lesson_count.label("lesson_count"),
+            )
+            .join(
+                ranked_courses,
+                ranked_courses.c.course_id == Course.id,
+            )
+            .where(ranked_courses.c.row_number <= courses_per_topic)
+            .options(
+                selectinload(Course.author),
+                selectinload(Course.topic),
+                selectinload(Course.course_tags).selectinload(
+                    CourseTag.tag
+                ),
+            )
+            .order_by(
+                Course.topic_id,
+                Course.created_at.desc(), 
+                Course.id
+            )
+        )
+
+        rows = self.db.execute(course_statement).all()
+
+        # Organize courses by topic
+        courses_by_topic: dict[UUID, list[CourseListItem]] = {}
+
+        for course, count in rows:
+            courses_by_topic.setdefault(
+                course.topic_id, []
+            ).append(
+                CourseListItem(
+                    course=course,
+                    lesson_count=count,
+                )
+            )
+
+        # returns final list of HomePageSection
+        return [
+            HomePageSection(
+                topic=topic,
+                courses=courses_by_topic[topic.id],
+            )
+            for topic, _ in selected_topics
+            if courses_by_topic.get(topic.id)
+        ]
+
     def list_published_for_catalog(
         self,
         page: int,
         page_size: int,
         search: str | None = None,
-        author_id: UUID | None = None,
+        author_ids: list[UUID] | None = None,
         topic_ids: list[UUID] | None = None,
         include_descendants: bool = False,
-        difficulty: CourseDifficulty | None = None,
+        difficulties: list[CourseDifficulty] | None = None,
         tags_ids_by_category: dict[UUID, list[UUID]] | None = None,
     ) -> tuple[list[CourseListItem], int]:
 
@@ -64,12 +205,12 @@ class SqlAlchemyCourseRepository(CourseRepository):
             )
 
         ### AUTHOR FILTER
-        if author_id is not None:
-            filters.append(Course.author_id == author_id)
+        if author_ids is not None:
+            filters.append(Course.author_id.in_(author_ids))
 
         ### DIFFICULTY FILTER
-        if difficulty is not None:
-            filters.append(Course.difficulty == difficulty)
+        if difficulties is not None:
+            filters.append(Course.difficulty.in_(difficulties))
 
         ### TOPIC FILTER
         selected_topic_ids = list(topic_ids or [])
@@ -316,6 +457,44 @@ class SqlAlchemyCourseRepository(CourseRepository):
 
     def get_by_id(self, course_id: UUID) -> Course | None:
         return self.db.get(Course, course_id)
+
+    def get_detail(
+        self,
+        course_id: UUID,
+    ) -> CourseListItem | None:
+
+        lesson_count = (
+            select(func.count(Lesson.id))
+            .where(Lesson.course_id == Course.id)
+            .correlate(Course)
+            .scalar_subquery()
+        )
+
+        statement = (
+            select(
+                Course, lesson_count.label("lesson_count")
+            )
+            .where(Course.id == course_id)
+            .options(
+                selectinload(Course.author),
+                selectinload(Course.topic),
+                selectinload(Course.course_tags).selectinload(
+                    CourseTag.tag
+                )
+            )
+        )
+
+        row = self.db.execute(statement).one_or_none()
+
+        if row is None:
+            return None
+
+        course, count = row
+
+        return CourseListItem(
+            course=course,
+            lesson_count=count,
+        )
 
     def add(self, course: Course) -> None:
         self.db.add(course)

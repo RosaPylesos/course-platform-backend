@@ -12,11 +12,11 @@ class GetCoursesInput:
     page: int = 1
     page_size: int = 16
     search: str | None = None
-    author_id: UUID | None = None
+    author_ids: list[UUID] | None = None
     topics: str | None = None
     tags: str | None = None
     include_descendants: bool = False
-    difficulty: CourseDifficulty | None = None
+    difficulties: list[CourseDifficulty] | None = None
 
 
 
@@ -45,9 +45,9 @@ class GetCoursesQuery:
             page=input.page,
             page_size=input.page_size,
             search=input.search,
-            author_id=input.author_id,
+            author_ids=input.author_ids,
             topic_ids=topic_ids,
             include_descendants=input.include_descendants,
-            difficulty=input.difficulty,
+            difficulties=input.difficulties,
             tags_ids_by_category=tags_ids_by_category,
         )
