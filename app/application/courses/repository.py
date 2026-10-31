@@ -5,10 +5,11 @@ from app.application.courses.views import (
     CourseCatalogFilters,
     CourseListItem,
     HomePageSection,
+    MyCoursesView,
 )
 
 from app.models.course import Course
-from app.models.enums import CourseDifficulty
+from app.models.enums import CourseDifficulty, CourseStatus
 
 
 
@@ -46,11 +47,20 @@ class CourseRepository(Protocol):
 
     def list_by_author(
         self,
-        author_id: UUID
-    ) -> list[Course]:
+        author_id: UUID,
+        page: int,
+        page_size: int,
+        status: CourseStatus | None = None,
+    ) -> MyCoursesView:
         ...
 
     def get_by_id(self, course_id: UUID) -> Course | None:
+        ...
+
+    def get_by_id_with_relations(
+        self,
+        course_id: UUID
+    ) -> Course | None:
         ...
 
     def get_detail(self, course_id: UUID) -> Course | None:

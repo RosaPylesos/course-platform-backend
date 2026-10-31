@@ -1,11 +1,12 @@
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.application.users.repository import UserRepository
 
 from app.models.user import User
+from app.models.user_topic import UserTopic
 
 
 
@@ -19,6 +20,23 @@ class SqlAlchemyUserRepository(UserRepository):
     ) -> User | None:
 
         return self.db.get(User, user_id)
+
+    def get_profile_by_id(
+        self,
+        user_id: UUID,
+    ) -> User | None:
+
+        statement = (
+            select(User)
+            .where(User.id == user_id)
+            .options(
+                selectinload(User.user_topics).selectinload(
+                    UserTopic.topic
+                )
+            )
+        )
+
+        return self.db.scalar(statement)
 
     def get_by_email(
         self,

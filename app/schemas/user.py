@@ -5,6 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 from app.models.enums import UserRole
 
+from app.schemas.user_topic import UserInterestResponse
+
 class UserRegister(BaseModel):
     name: str = Field(
         min_length=1,
@@ -48,6 +50,15 @@ class UserResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserProfileResponse(BaseModel):
+    id: UUID
+    name: str
+    surname: str | None
+    email: EmailStr
+    role: UserRole
+    created_at: datetime
+    topics: list[UserInterestResponse]
 
 class TokenResponse(BaseModel):
     access_token: str

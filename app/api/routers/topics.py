@@ -5,11 +5,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.api.mappers.topic_mapper import (
+    to_topics_list_response,
+)
 from app.api.dependencies import get_db, require_roles
+from app.api.deps.topics import get_topics_query
+from app.api.schemas.topics import TopicListParams
 
 from app.application.topics.queries import (
     GetTopicsQuery,
     GetTopicQuery,
+    GetTopicsInput,
 )
 from app.application.topics.commands import (
     CreateTopicCommand,
@@ -32,6 +38,7 @@ from app.schemas.topic import (
     TopicCreate, 
     TopicResponse, 
     TopicUpdate,
+    TopicListResponse,
 )
 
 router = APIRouter(
@@ -41,17 +48,28 @@ router = APIRouter(
 
 @router.get(
     "/", 
-    response_model=list[TopicResponse],
+    response_model=TopicListResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_topics(
-    db: Annotated[Session, Depends(get_db)],
-) -> list[Topic]:
+    query: Annotated[
+        GetTopicsQuery,
+        Depends(get_topics_query),
+    ],
+    params: Annotated[
+        TopicListParams,
+        Depends(),
+    ]
+) -> TopicListResponse:
     
-    query = GetTopicsQuery(
-        SqlAlchemyTopicRepository(db)
+    input = GetTopicsInput(
+        **params.model_dump()
     )
-    return query.execute()
+    items, total = query.execute(input)
+    
+    return to_topics_list_response(
+        items, total, params.page, params.page_size,
+    )
 
 @router.get(
     "/{topic_id}", 

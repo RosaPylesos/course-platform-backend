@@ -4,11 +4,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.api.schemas.tags import TagListParams
 from app.api.dependencies import get_db, require_roles
+from app.api.mappers.tag_mapper import (
+    to_tag_list_response,
+)
+from app.api.deps.tags import get_tags_query
 
 from app.application.tags.queries import (
     GetTagQuery,
     GetTagsQuery,
+    GetTagsInput,
 )
 from app.application.tags.commands import (
     CreateTagCommand,
@@ -31,6 +37,7 @@ from app.schemas.tag import (
     TagCreate,
     TagUpdate,
     TagResponse,
+    TagListResponse,
 )
 
 router = APIRouter(
@@ -40,17 +47,25 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[TagResponse],
+    response_model=TagListResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_tags(
-    db: Annotated[Session, Depends(get_db)],
-) -> list[Tag]:
+    query: Annotated[
+        GetTagsQuery,
+        Depends(get_tags_query),
+    ],
+    params: Annotated[
+        TagListParams,
+        Depends(),
+    ],
+) -> TagListResponse:
 
-    query = GetTagsQuery(
-        SqlAlchemyTagRepository(db)
+    input = GetTagsInput(**params.model_dump())
+    items, total = query.execute(input)
+    return to_tag_list_response(
+        items, total, params.page, params.page_size,
     )
-    return query.execute()
 
 @router.get(
     "/{tag_id}",

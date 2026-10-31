@@ -3,6 +3,7 @@ from app.application.courses.queries.get_courses import GetCoursesInput
 from app.application.courses.queries.get_course import GetCourseQuery
 from app.application.courses.queries.get_course_progress import GetCourseProgressQuery
 from app.application.courses.queries.get_my_courses import GetMyCoursesQuery
+from app.application.courses.queries.get_my_courses import GetMyCoursesInput
 from app.application.courses.queries.get_all_courses import GetAllCoursesQuery
 from app.application.courses.queries.get_my_course import GetMyCourseQuery
 from app.application.courses.queries.get_course_catalog_filters import GetCourseCatalogFiltersQuery

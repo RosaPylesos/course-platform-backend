@@ -35,3 +35,9 @@ class LessonResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class LessonListItemResponse(BaseModel):
+    id: UUID
+    name: str
+    description: str | None
+    position: int

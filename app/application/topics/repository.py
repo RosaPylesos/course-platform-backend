@@ -7,7 +7,11 @@ from app.models.topic import Topic
 
 class TopicRepository(Protocol):
     
-    def list_all(self) -> list[Topic]:
+    def list(
+        self,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[Topic], int]:
         ...
 
     def get_by_id(

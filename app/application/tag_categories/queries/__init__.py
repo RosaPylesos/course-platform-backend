@@ -1,2 +1,3 @@
 from app.application.tag_categories.queries.get_tag_categories import GetTagCategoriesQuery
 from app.application.tag_categories.queries.get_tag_category import GetTagCategoryQuery
+from app.application.tag_categories.queries.get_tag_categories import GetTagCategoriesInput

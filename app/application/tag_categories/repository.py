@@ -7,7 +7,11 @@ from app.models.tag_category import TagCategory
 
 class TagCategoryRepository(Protocol):
     
-    def list_all(self) -> list[TagCategory]:
+    def list(
+        self,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[TagCategory], int]:
         ...
 
     def get_by_id(

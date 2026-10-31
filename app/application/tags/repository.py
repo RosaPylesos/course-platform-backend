@@ -7,7 +7,12 @@ from app.models.tag import Tag
 
 class TagRepository(Protocol):
 
-    def list_all(self) -> list[Tag]: ...
+    def list(
+        self,
+        page: int,
+        page_size: int,
+        tag_category_id: UUID | None = None,
+    ) -> tuple[list[Tag], int]: ...
 
     def get_by_id(
         self, 

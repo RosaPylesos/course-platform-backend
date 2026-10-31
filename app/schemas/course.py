@@ -66,6 +66,44 @@ class CourseListResponse(BaseModel):
     page_size: int
     total_pages: int
 
+class MyCourseListItemResponse(BaseModel):
+    id: UUID
+    name: str
+    status: CourseStatus
+    thumbnail_path: str | None
+    topic: TopicResponse
+    tags: list[TagResponse] = Field(
+        default_factory=list
+    )
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MyCourseListResponse(BaseModel):
+    items: list[MyCourseListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    status_counts: dict[CourseStatus, int]
+
+class MyCourseDetailResponse(BaseModel):
+    id: UUID
+    name: str
+    description: str | None
+    status: CourseStatus
+    difficulty: CourseDifficulty
+    thumbnail_path: str | None
+    topic: TopicResponse
+    tags: list[TagResponse] = Field(
+        default_factory=list
+    )
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 class CatalogFilterAuthorResponse(BaseModel):
     id: UUID
     name: str

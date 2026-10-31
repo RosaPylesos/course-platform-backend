@@ -21,3 +21,10 @@ class TopicResponse(BaseModel):
     slug: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class TopicListResponse(BaseModel):
+    items: list[TopicResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

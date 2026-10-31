@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.application.tags.repository import TagRepository
@@ -14,10 +14,39 @@ class SqlAlchemyTagRepository(TagRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_all(self) -> list[Tag]:
+    def list(
+        self,
+        page: int,
+        page_size: int,
+        tag_category_id: UUID | None = None,
+    ) -> tuple[list[Tag], int]:
 
-        statement = select(Tag).order_by(Tag.name)
-        return list(self.db.scalars(statement).all())
+        offset = (page - 1) * page_size
+
+        statement = select(Tag)
+
+        total_statement = select(func.count(Tag.id))
+
+        if tag_category_id is not None:
+            statement = statement.where(
+                Tag.tag_category_id == tag_category_id
+            )
+
+            total_statement = total_statement.where(
+                Tag.tag_category_id == tag_category_id
+            )
+
+        statement = (
+            statement
+            .order_by(Tag.name, Tag.id)
+            .offset(offset)
+            .limit(page_size)
+        )
+
+        items = list(self.db.scalars(statement).all())
+        total = self.db.scalar(total_statement) or 0
+
+        return items, total
 
     def get_by_id(
         self,

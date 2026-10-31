@@ -6,6 +6,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db, require_roles, get_current_user
+from app.api.mappers.lesson_mapper import (
+    to_lesson_list_item_response,
+)
 
 from app.application.lessons.queries import (
     GetLessonQuery,
@@ -32,7 +35,8 @@ from app.schemas.lesson import (
     LessonCreate, 
     LessonResponse, 
     LessonUpdate,
-    LessonReorder
+    LessonReorder,
+    LessonListItemResponse,
 )
 from app.schemas.lesson_progress import LessonProgressResponse
 
@@ -43,20 +47,26 @@ router = APIRouter (
 
 @router.get(
     "/",
-    response_model=list[LessonResponse],
+    response_model=list[LessonListItemResponse],
     status_code=status.HTTP_200_OK,
 )
 def get_lessons(
     course_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> list[Lesson]:
+) -> list[LessonListItemResponse]:
     
-    query = GetLessonsQuery(SqlAlchemyUnitOfWork(db))
-    return query.execute(
+    lessons = GetLessonsQuery(
+        SqlAlchemyUnitOfWork(db)
+    ).execute(
         course_id=course_id,
         user=current_user,
     )
+
+    return [
+        to_lesson_list_item_response(lesson)
+        for lesson in lessons
+    ]
 
 @router.get(
     "/{lesson_id}", 

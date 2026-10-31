@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select, func, exists, case
+from sqlalchemy import select, func, exists
 from sqlalchemy.orm import Session, selectinload, aliased
 
 from app.application.courses.repository import CourseRepository
@@ -12,6 +12,7 @@ from app.application.courses.views import (
     CatalogFilterTag,
     CourseListItem,
     HomePageSection,
+    MyCoursesView,
 )
 
 from app.models.enums import CourseStatus, CourseDifficulty
@@ -445,18 +446,94 @@ class SqlAlchemyCourseRepository(CourseRepository):
 
     def list_by_author(
         self,
-        author_id: UUID
-    ) -> list[Course]:
+        author_id: UUID,
+        page: int,
+        page_size: int,
+        status: CourseStatus | None = None,
+    ) -> MyCoursesView:
+
+        offset = (page - 1) * page_size
 
         statement = (
             select(Course)
             .where(Course.author_id == author_id)
+            .options(
+                selectinload(Course.topic),
+                selectinload(Course.course_tags).selectinload(
+                    CourseTag.tag
+                ),
+            )
             .order_by(Course.created_at.desc(), Course.id)
+            # .offset(offset)
+            # .limit(page_size)
         )
-        return list(self.db.scalars(statement).all())
+
+        if status is not None:
+            statement = statement.where(Course.status == status)
+
+        items = list(self.db.scalars(statement).all())
+
+        ### Count total course amount (incl. filters)
+        total_statement = (
+            select(func.count(Course.id))
+            .where(Course.author_id == author_id)
+        )
+
+        if status is not None:
+            total_statement = total_statement.where(
+                Course.status == status
+            )
+
+        total = self.db.scalar(total_statement) or 0
+
+        ### Count course amount per status
+        counts_statement = (
+            select(Course.status, func.count(Course.id))
+            .where(Course.author_id == author_id)
+            .group_by(Course.status)
+        )
+
+        counts_rows = self.db.execute(counts_statement).all()
+
+        status_counts = {
+            course_status: count
+            for course_status, count in counts_rows
+        }
+
+        for course_status in CourseStatus:
+            status_counts.setdefault(course_status, 0)
+
+        total_pages = (total + page_size - 1) // page_size
+
+        return MyCoursesView(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+            status_counts=status_counts,
+        )
 
     def get_by_id(self, course_id: UUID) -> Course | None:
         return self.db.get(Course, course_id)
+
+    def get_by_id_with_relations(
+        self,
+        course_id: UUID
+    ) -> Course | None:
+
+        statement = (
+            select(Course)
+            .where(Course.id == course_id)
+            .options(
+                selectinload(Course.topic),
+                selectinload(Course.course_tags).selectinload(
+                    CourseTag.tag
+                ),
+            )
+        )
+
+        return self.db.scalar(statement)
 
     def get_detail(
         self,

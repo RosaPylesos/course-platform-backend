@@ -2,7 +2,10 @@ from app.application.courses.views import (
     CourseCatalogFilters,
     CourseListItem,
     HomePageSection,
+    MyCoursesView,
 )
+
+from app.models.course import Course
 
 from app.schemas.course import (
     CourseListItemResponse,
@@ -10,18 +13,24 @@ from app.schemas.course import (
     CatalogFilterTagCategoryResponse,
     CatalogFilterTopicResponse,
     CatalogFilterAuthorResponse,
-    CatalogFilterTagResponse
+    CatalogFilterTagResponse,
+    MyCourseListResponse,
+    MyCourseListItemResponse,
+    MyCourseDetailResponse,
 )
 from app.schemas.home_page import (
     HomePageResponse,
     HomePageSectionResponse,
 )
+from app.schemas.topic import TopicResponse
+from app.schemas.tag import TagResponse
 
 
 
 def to_course_list_item_response(
     item: CourseListItem,
 ) -> CourseListItemResponse:
+    
     return CourseListItemResponse(
         id=item.course.id,
         name=item.course.name,
@@ -78,6 +87,7 @@ def to_course_catalog_filters_response(
 def to_home_page_response(
     sections: list[HomePageSection],
 ) -> HomePageResponse:
+    
     return HomePageResponse(
         sections=[
             HomePageSectionResponse(
@@ -89,4 +99,52 @@ def to_home_page_response(
             )
             for section in sections
         ]
+    )
+
+def to_my_courses_response(
+    view: MyCoursesView,
+) -> MyCourseListResponse:
+
+    return MyCourseListResponse(
+        items=[
+            MyCourseListItemResponse(
+                id=course.id,
+                name=course.name,
+                status=course.status,
+                thumbnail_path=course.thumbnail_path,
+                topic=TopicResponse.model_validate(course.topic),
+                tags=[
+                    TagResponse.model_validate(course_tag.tag)
+                    for course_tag in course.course_tags
+                ],
+                created_at=course.created_at,
+                updated_at=course.updated_at,
+            )
+            for course in view.items
+        ],
+        total=view.total,
+        page=view.page,
+        page_size=view.page_size,
+        total_pages=view.total_pages,
+        status_counts=view.status_counts,
+    )
+
+def to_my_course_detail_response(
+    course: Course,
+) -> MyCourseDetailResponse:
+
+    return MyCourseDetailResponse(
+        id=course.id,
+        name=course.name,
+        description=course.description,
+        difficulty=course.difficulty,
+        status=course.status,
+        thumbnail_path=course.thumbnail_path,
+        topic=TopicResponse.model_validate(course.topic),
+        tags=[
+            TagResponse.model_validate(course_tag.tag)
+            for course_tag in course.course_tags
+        ],
+        created_at=course.created_at,
+        updated_at=course.updated_at,
     )

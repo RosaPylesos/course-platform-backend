@@ -13,6 +13,12 @@ class UserRepository(Protocol):
     ) -> User | None:
         ...
 
+    def get_profile_by_id(
+        self,
+        user_id: UUID,
+    ) -> User | None:
+        ...
+
     def get_by_email(
         self, 
         email: str,

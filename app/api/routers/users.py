@@ -6,15 +6,22 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
+from app.api.mappers.user_mapper import (
+    to_user_profile_response,
+)
 from app.api.dependencies import (
     get_db, 
     get_current_user,
     require_roles,
 )
+from app.api.deps.user_profile import (
+    get_my_profile_query,
+)
 
 from app.application.users.queries import (
     AuthenticateUserQuery,
     ListUsersQuery,
+    GetMyProfileQuery,
 )
 from app.application.users.commands import (
     RegisterUserCommand,
@@ -33,6 +40,7 @@ from app.models.enums import UserRole
 from app.schemas.user import (
     UserRegister, 
     UserResponse,
+    UserProfileResponse,
     UserLogin,
     TokenResponse,
 )
@@ -97,13 +105,18 @@ def login_for_swagger(
 
 @router.get(
     "/me", 
-    response_model=UserResponse,
+    response_model=UserProfileResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_me(
     current_user: Annotated[User, Depends(get_current_user)],
-) -> User:
-    return current_user
+    query: Annotated[
+        GetMyProfileQuery, Depends(get_my_profile_query)
+    ],
+) -> UserProfileResponse:
+
+    user = query.execute(current_user.id)
+    return to_user_profile_response(user)
 
 @router.get(
     "/",

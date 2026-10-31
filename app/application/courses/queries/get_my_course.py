@@ -20,7 +20,9 @@ class GetMyCourseQuery:
         author_id: UUID,
     ) -> Course:
 
-        course = self.repository.get_by_id(course_id)
+        course = self.repository.get_by_id_with_relations(
+            course_id
+        )
 
         if course is None:
             raise ResourceNotFoundError("Course not found")

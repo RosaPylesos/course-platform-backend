@@ -5,3 +5,4 @@ from app.application.courses.views.course_catalog_filter import CatalogFilterTop
 from app.application.courses.views.course_catalog_filter import CatalogFilterAuthor
 from app.application.courses.views.course_catalog_filter import CatalogFilterTag
 from app.application.courses.views.home_page_section import HomePageSection
+from app.application.courses.views.my_courses_view import MyCoursesView

@@ -11,7 +11,11 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.api.schemas.course_catalog import CourseCatalogParams
-from app.api.deps.course_catalog import (
+from app.api.schemas.my_course import MyCoursesParams
+
+from app.api.deps.courses import (
+    get_my_courses_query,
+    get_my_course_query,
     get_course_catalog_query,
 )
 
@@ -23,6 +27,8 @@ from app.api.dependencies import (
 from app.api.mappers.course_mapper import (
     to_course_list_item_response,
     to_course_catalog_filters_response,
+    to_my_courses_response,
+    to_my_course_detail_response,
 )
 
 from app.models.course import Course
@@ -39,6 +45,7 @@ from app.application.courses.queries import (
     GetMyCourseQuery,
     GetCourseCatalogFiltersQuery,
     GetCoursesInput,
+    GetMyCoursesInput,
 )
 from app.application.courses.commands import (
     CreateCourseCommand,
@@ -66,6 +73,8 @@ from app.schemas.course import (
     CourseListResponse,
     CourseListItemResponse,
     CourseCatalogFiltersResponse,
+    MyCourseListResponse,
+    MyCourseDetailResponse,
 )
 from app.schemas.lesson_progress import CourseProgressResponse
 
@@ -89,16 +98,7 @@ def get_courses(
     ],
 ) -> CourseListResponse:
 
-    input = GetCoursesInput(
-        page=params.page,
-        page_size=params.page_size,
-        search=params.search,
-        author_ids=params.author_ids,
-        topics=params.topics,
-        tags=params.tags,
-        include_descendants=params.include_descendants,
-        difficulties=params.difficulties,
-    )
+    input = GetCoursesInput(**params.model_dump())
     
     items, total = query.execute(input)
     return CourseListResponse(
@@ -130,7 +130,7 @@ def get_course_catalog_filters(
 
 @router.get(
     "/my",
-    response_model=list[CourseResponse],
+    response_model=MyCourseListResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_my_courses(
@@ -143,19 +143,27 @@ def get_my_courses(
             )
         ),
     ],
-    db: Annotated[Session, Depends(get_db)],
-) -> list[Course]:
+    query: Annotated[
+        GetMyCoursesQuery,
+        Depends(get_my_courses_query),
+    ],
+    params: Annotated[
+        MyCoursesParams, 
+        Depends(),
+    ],
+) -> MyCourseListResponse:
 
-    query = GetMyCoursesQuery(
-        SqlAlchemyCourseRepository(db)
-    )
-    return query.execute(
+    input = GetMyCoursesInput(**params.model_dump())
+
+    result = query.execute(
         author_id=current_user.id,
+        input=input,
     )
+    return to_my_courses_response(result)
 
 @router.get(
     "/my/{course_id}",
-    response_model=CourseResponse,
+    response_model=MyCourseDetailResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_my_course(
@@ -169,16 +177,17 @@ def get_my_course(
             )
         )
     ],
-    db: Annotated[Session, Depends(get_db)],
-) -> Course:
+    query: Annotated[
+        GetMyCourseQuery,
+        Depends(get_my_course_query),
+    ],
+) -> MyCourseDetailResponse:
 
-    query = GetMyCourseQuery(
-        SqlAlchemyCourseRepository(db)
-    )
-    return query.execute(
+    course = query.execute(
         course_id=course_id,
         author_id=current_user.id,
     )
+    return to_my_course_detail_response(course)
 
 @router.get(
     "/manage",

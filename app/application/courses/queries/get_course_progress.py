@@ -31,6 +31,10 @@ class GetCourseProgressQuery:
         if course is None:
             raise ResourceNotFoundError("Course not found")
 
+        ### CHECK
+        # This thing below looks like something
+        # that should be in separate function.
+        # Just for shorten the entire query.
         enrollment = self.uow.enrollments.get_by_user_and_course(
             current_user.id,
             course_id,

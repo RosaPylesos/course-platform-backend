@@ -24,3 +24,10 @@ class TagResponse(BaseModel):
     slug: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class TagListResponse(BaseModel):
+    items: list[TagResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

@@ -4,11 +4,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.api.deps.tags import (
+    get_tag_categories_query,
+)
+from app.api.schemas.tags import TagCategoryListParams
 from app.api.dependencies import get_db, require_roles
+from app.api.mappers.tag_mapper import (
+    to_tag_categories_list_response,
+)
 
 from app.application.tag_categories.queries import (
     GetTagCategoryQuery,
     GetTagCategoriesQuery,
+    GetTagCategoriesInput,
 )
 from app.application.tag_categories.commands import (
     CreateTagCategoryCommand,
@@ -31,6 +39,7 @@ from app.schemas.tag_category import(
     TagCategoryCreate,
     TagCategoryUpdate,
     TagCategoryResponse,
+    TagCategoryListResponse,
 )
 
 router = APIRouter(
@@ -40,17 +49,24 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[TagCategoryResponse],
+    response_model=TagCategoryListResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_tag_categories(
-    db: Annotated[Session, Depends(get_db)],
+    params: Annotated[TagCategoryListParams, Depends()],
+    query: Annotated[
+        GetTagCategoriesQuery,
+        Depends(get_tag_categories_query)
+    ],
 ) -> list[TagCategory]:
 
-    query = GetTagCategoriesQuery(
-        SqlAlchemyTagCategoryRepository(db)
+    input = GetTagCategoriesInput(
+        **params.model_dump()
     )
-    return query.execute()
+    items, total = query.execute(input)
+    return to_tag_categories_list_response(
+        items, total, params.page, params.page_size,
+    )
 
 @router.get(
     "/{category_id}",

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.application.topics.repository import TopicRepository
@@ -14,10 +14,30 @@ class SqlAlchemyTopicRepository(TopicRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_all(self) -> list[Topic]:
+    def list(
+        self,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[Topic], int]:
 
-        statement = select(Topic).order_by(Topic.name)
-        return list(self.db.scalars(statement).all())
+        offset = (page - 1) * page_size
+
+        statement = (
+            select(Topic)
+            .order_by(Topic.name, Topic.id)
+            .offset(offset)
+            .limit(page_size)
+        )
+
+        items = list(self.db.scalars(statement).all())
+
+        total_statement = select(
+            func.count(Topic.id)
+        )
+
+        total = self.db.scalar(total_statement) or 0
+
+        return items , total
 
     def get_by_id(
         self, 
