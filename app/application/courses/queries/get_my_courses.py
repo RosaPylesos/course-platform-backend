@@ -17,8 +17,11 @@ class GetMyCoursesInput:
 
 
 class GetMyCoursesQuery:
-    def __init__(self, repository: CourseRepository) -> None:
-        self.repository = repository
+    def __init__(
+        self, 
+        course_repository: CourseRepository,
+    ) -> None:
+        self.course_repository = course_repository
 
     def execute(
         self,
@@ -26,7 +29,7 @@ class GetMyCoursesQuery:
         input: GetMyCoursesInput
     ) -> MyCoursesView:
 
-        return self.repository.list_by_author(
+        return self.course_repository.list_by_author(
             author_id=author_id,
             page=input.page,
             page_size=input.page_size,

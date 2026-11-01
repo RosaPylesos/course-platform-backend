@@ -2,7 +2,7 @@ from uuid import UUID
 from dataclasses import dataclass
 
 from app.application.courses.repository import CourseRepository
-from app.application.courses.views.course_list_item import CourseListItem
+from app.application.courses.views.course_list import CourseListView
 from app.application.courses.resolve_catalog_filters import ResolveCatalogFilters
 
 from app.models.enums import CourseDifficulty
@@ -23,16 +23,16 @@ class GetCoursesInput:
 class GetCoursesQuery:
     def __init__(
         self, 
-        repository: CourseRepository,
+        course_repository: CourseRepository,
         filter_resolver: ResolveCatalogFilters,
     ) -> None:
-        self.repository = repository
+        self.course_repository = course_repository
         self.filter_resolver = filter_resolver
 
     def execute(
         self,
         input: GetCoursesInput,
-    ) -> tuple[list[CourseListItem], int]:
+    ) -> CourseListView:
 
         topic_ids = (
             self.filter_resolver.resolve_topics(input.topics)
@@ -41,7 +41,7 @@ class GetCoursesQuery:
             self.filter_resolver.resolve_tags(input.tags)
         )
         
-        return self.repository.list_published_for_catalog(
+        return self.course_repository.list_published_for_catalog(
             page=input.page,
             page_size=input.page_size,
             search=input.search,

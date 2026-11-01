@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.application.courses.repository import CourseRepository
-from app.application.courses.views import HomePageSection
+from app.application.courses.views import HomePageSectionView
 from app.application.user_topics.repository import UserTopicRepository
 
 
@@ -10,7 +10,7 @@ class GetHomePageQuery:
     def __init__(
         self, 
         course_repository: CourseRepository,
-        user_topic_repository: UserTopicRepository
+        user_topic_repository: UserTopicRepository,
     ) -> None:
         self.course_repository = course_repository
         self.user_topic_repository = user_topic_repository
@@ -18,7 +18,7 @@ class GetHomePageQuery:
     def execute(
         self,
         user_id: UUID | None = None,
-    ) -> list[HomePageSection]:
+    ) -> list[HomePageSectionView]:
 
         preferred_topics = []
 

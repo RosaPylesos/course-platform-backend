@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.application.courses.repository import CourseRepository
+from app.application.courses.views import AllCoursesView
 
 from app.models.course import Course
 from app.models.enums import SortBy, SortOrder
@@ -17,13 +18,16 @@ class GetAllCoursesInput:
 
 
 class GetAllCoursesQuery:
-    def __init__(self, course_repository: CourseRepository) -> None:
+    def __init__(
+        self, 
+        course_repository: CourseRepository,
+    ) -> None:
         self.course_repository = course_repository
 
     def execute(
         self,
         input: GetAllCoursesInput,
-    ) -> tuple[list[Course], int]:
+    ) -> AllCoursesView:
 
         return self.course_repository.list_all(
             page=input.page,

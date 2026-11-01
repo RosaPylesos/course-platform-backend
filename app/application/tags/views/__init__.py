@@ -1,0 +1,1 @@
+from app.application.tags.views.tag_list import TagListView

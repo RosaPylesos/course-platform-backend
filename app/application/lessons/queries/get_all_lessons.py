@@ -17,7 +17,10 @@ class GetAllLessonsInput:
 
 
 class GetAllLessonsQuery:
-    def __init__(self, lesson_repository: LessonRepository) -> None:
+    def __init__(
+        self, 
+        lesson_repository: LessonRepository,
+    ) -> None:
         self.lesson_repository = lesson_repository
 
     def execute(

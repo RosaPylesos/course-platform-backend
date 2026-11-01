@@ -1,6 +1,8 @@
 from typing import Protocol
 from uuid import UUID
 
+from app.application.topics.views import TopicListView
+
 from app.models.topic import Topic
 
 
@@ -11,7 +13,7 @@ class TopicRepository(Protocol):
         self,
         page: int,
         page_size: int,
-    ) -> tuple[list[Topic], int]:
+    ) -> TopicListView:
         ...
 
     def get_by_id(

@@ -6,33 +6,33 @@ from app.models.enums import CourseDifficulty
 
 
 @dataclass
-class CatalogFilterAuthor:
+class CatalogFilterAuthorView:
     id:UUID
     name:str
     surname: str | None
 
 @dataclass
-class CatalogFilterTopic:
+class CatalogFilterTopicView:
     id: UUID
     name: str
     parent_id: UUID | None
     slug: str
 
 @dataclass
-class CatalogFilterTag:
+class CatalogFilterTagView:
     id: UUID
     name: str
     slug: str
 
 @dataclass
-class CatalogFilterTagCategory:
+class CatalogFilterTagCategoryView:
     id: UUID
     name: str
-    tags: list[CatalogFilterTag]
+    tags: list[CatalogFilterTagView]
 
 @dataclass
-class CourseCatalogFilters:
-    authors: list[CatalogFilterAuthor]
-    topics: list[CatalogFilterTopic]
-    tag_categories: list[CatalogFilterTagCategory]
+class CourseCatalogFiltersView:
+    authors: list[CatalogFilterAuthorView]
+    topics: list[CatalogFilterTopicView]
+    tag_categories: list[CatalogFilterTagCategoryView]
     difficulties: list[CourseDifficulty]

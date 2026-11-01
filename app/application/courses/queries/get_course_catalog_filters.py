@@ -1,14 +1,17 @@
 from app.application.courses.repository import CourseRepository
 from app.application.courses.views.course_catalog_filter import (
-    CourseCatalogFilters,
+    CourseCatalogFiltersView,
 )
 
 
 
 class GetCourseCatalogFiltersQuery:
-    def __init__(self, repository: CourseRepository) -> None:
-        self.repository = repository
+    def __init__(
+        self, 
+        course_repository: CourseRepository,
+    ) -> None:
+        self.course_repository = course_repository
 
-    def execute(self) -> CourseCatalogFilters:
+    def execute(self) -> CourseCatalogFiltersView:
 
-        return self.repository.get_catalog_filters()
+        return self.course_repository.get_catalog_filters()

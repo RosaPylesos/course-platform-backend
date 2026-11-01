@@ -2,8 +2,7 @@ from uuid import UUID
 from dataclasses import dataclass
 
 from app.application.tags.repository import TagRepository
-
-from app.models.tag import Tag
+from app.application.tags.views import TagListView
 
 
 
@@ -25,7 +24,7 @@ class GetTagsQuery:
     def execute(
         self,
         input: GetTagsInput,
-    ) -> tuple[list[Tag], int]:
+    ) -> TagListView:
 
         return self.tag_repository.list(
             page=input.page,

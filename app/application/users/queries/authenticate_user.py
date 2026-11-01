@@ -8,8 +8,11 @@ from app.models.user import User
 
 
 class AuthenticateUserQuery:
-    def __init__(self, repository: UserRepository) -> None:
-        self.repository = repository
+    def __init__(
+        self, 
+        user_repository: UserRepository,
+    ) -> None:
+        self.user_repository = user_repository
 
     def execute(
         self,
@@ -18,7 +21,7 @@ class AuthenticateUserQuery:
     ) -> tuple[User, str]:
 
         normalized_email = email.strip().lower()
-        user = self.repository.get_by_email(normalized_email)
+        user = self.user_repository.get_by_email(normalized_email)
 
         if user is None or not verify_password(
             password,

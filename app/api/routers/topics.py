@@ -65,11 +65,9 @@ def get_topics(
     input = GetTopicsInput(
         **params.model_dump()
     )
-    items, total = query.execute(input)
+    result = query.execute(input)
     
-    return to_topics_list_response(
-        items, total, params.page, params.page_size,
-    )
+    return to_topics_list_response(result)
 
 @router.get(
     "/{topic_id}", 

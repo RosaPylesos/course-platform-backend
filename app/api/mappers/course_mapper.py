@@ -1,8 +1,10 @@
 from app.application.courses.views import (
-    CourseCatalogFilters,
-    CourseListItem,
-    HomePageSection,
+    CourseCatalogFiltersView,
+    CourseListItemView,
+    CourseListView,
+    HomePageSectionView,
     MyCoursesView,
+    AllCoursesView,
 )
 
 from app.models.course import Course
@@ -31,7 +33,7 @@ from app.schemas.tag import TagResponse
 
 
 def to_course_list_item_response(
-    item: CourseListItem,
+    item: CourseListItemView,
 ) -> CourseListItemResponse:
     
     return CourseListItemResponse(
@@ -49,25 +51,22 @@ def to_course_list_item_response(
     )
 
 def to_course_list_response(
-    items: list[CourseListItem],
-    total: int,
-    page: int,
-    page_size: int,
+    view: CourseListView
 ) -> CourseListResponse:
 
     return CourseListResponse(
         items=[
             to_course_list_item_response(item)
-            for item in items
+            for item in view.items
         ],
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size,
+        total=view.total,
+        page=view.page,
+        page_size=view.page_size,
+        total_pages=view.total_pages,
     )
 
 def to_course_catalog_filters_response(
-    filters: CourseCatalogFilters
+    filters: CourseCatalogFiltersView
 ) -> CourseCatalogFiltersResponse:
     return CourseCatalogFiltersResponse(
         authors=[
@@ -106,7 +105,7 @@ def to_course_catalog_filters_response(
     )
 
 def to_home_page_response(
-    sections: list[HomePageSection],
+    sections: list[HomePageSectionView],
 ) -> HomePageResponse:
     
     return HomePageResponse(
@@ -171,10 +170,7 @@ def to_my_course_detail_response(
     )
 
 def to_managed_course_list_response(
-    items: list[Course],
-    total: int,
-    page: int,
-    page_size: int,
+    view: AllCoursesView,
 ) -> ManagedCourseListResponse:
 
     return ManagedCourseListResponse(
@@ -182,10 +178,10 @@ def to_managed_course_list_response(
             ManagedCourseListItemResponse.model_validate(
                 course
             )
-            for course in items
+            for course in view.items
         ],
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size,
+        total=view.total,
+        page=view.page,
+        page_size=view.page_size,
+        total_pages=view.total_pages,
     )

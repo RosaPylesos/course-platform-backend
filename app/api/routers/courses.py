@@ -30,6 +30,7 @@ from app.api.dependencies import (
 )
 from app.api.mappers.course_mapper import (
     to_course_list_response,
+    to_course_list_item_response,
     to_course_catalog_filters_response,
     to_my_courses_response,
     to_my_course_detail_response,
@@ -106,14 +107,9 @@ def get_courses(
 ) -> CourseListResponse:
 
     input = GetCoursesInput(**params.model_dump())
-    items, total = query.execute(input)
+    result = query.execute(input)
     
-    return to_course_list_response(
-        items=items, 
-        total=total, 
-        page=params.page, 
-        page_size=params.page_size,
-    )
+    return to_course_list_response(result)
 
 @router.get(
     "/filters",
@@ -128,8 +124,8 @@ def get_course_catalog_filters(
         SqlAlchemyCourseRepository(db),
     )
 
-    filters = query.execute()
-    return to_course_catalog_filters_response(filters)
+    result = query.execute()
+    return to_course_catalog_filters_response(result)
 
 @router.get(
     "/my",
@@ -213,9 +209,9 @@ def get_all_courses(
 ) -> ManagedCourseListResponse:
 
     input = GetAllCoursesInput(**params.model_dump())
-    items, total = query.execute(input)
+    result = query.execute(input)
     return to_managed_course_list_response(
-        items, total, params.page, params.page_size
+        result
     )
 
 @router.get(

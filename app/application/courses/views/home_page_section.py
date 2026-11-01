@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from app.application.courses.views import CourseListItem
+from app.application.courses.views import CourseListItemView
 
 from app.models.topic import Topic
 
 @dataclass(frozen=True)
-class HomePageSection:
+class HomePageSectionView:
     topic: Topic
-    courses: list[CourseListItem]
+    courses: list[CourseListItemView]

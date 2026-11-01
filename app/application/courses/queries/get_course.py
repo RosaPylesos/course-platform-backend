@@ -5,8 +5,8 @@ from app.application.exceptions import (
     AccessDeniedError,
     ResourceNotFoundError
 )
-from app.application.courses.views.course_list_item import (
-    CourseListItem
+from app.application.courses.views.course_list import (
+    CourseListItemView
 )
 
 from app.models.enums import CourseStatus
@@ -14,14 +14,17 @@ from app.models.enums import CourseStatus
 
 
 class GetCourseQuery:
-    def __init__(self, repository: CourseRepository) -> None:
-        self.repository = repository
+    def __init__(
+        self, 
+        course_repository: CourseRepository,
+    ) -> None:
+        self.course_repository = course_repository
 
     def execute(
         self,
         course_id: UUID
-    ) -> CourseListItem:
-        course = self.repository.get_detail(course_id)
+    ) -> CourseListItemView:
+        course = self.course_repository.get_detail(course_id)
 
         if course is None:
             raise ResourceNotFoundError("Course not found")

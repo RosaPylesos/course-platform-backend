@@ -11,8 +11,11 @@ from app.models.course import Course
 
 
 class GetMyCourseQuery:
-    def __init__(self, repository: CourseRepository) -> None:
-        self.repository = repository
+    def __init__(
+        self, 
+        course_repository: CourseRepository,
+    ) -> None:
+        self.course_repository = course_repository
 
     def execute(
         self,
@@ -20,7 +23,7 @@ class GetMyCourseQuery:
         author_id: UUID,
     ) -> Course:
 
-        course = self.repository.get_by_id_with_relations(
+        course = self.course_repository.get_by_id_with_relations(
             course_id
         )
 

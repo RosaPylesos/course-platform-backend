@@ -62,10 +62,8 @@ def get_tags(
 ) -> TagListResponse:
 
     input = GetTagsInput(**params.model_dump())
-    items, total = query.execute(input)
-    return to_tag_list_response(
-        items, total, params.page, params.page_size,
-    )
+    result = query.execute(input)
+    return to_tag_list_response(result)
 
 @router.get(
     "/{tag_id}",

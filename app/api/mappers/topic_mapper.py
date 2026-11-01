@@ -1,20 +1,22 @@
+from app.application.topics.views import TopicListView
+
 from app.models.topic import Topic
 
-from app.schemas.topic import TopicListResponse
+from app.schemas.topic import TopicListResponse, TopicResponse
 
 
 
 def to_topics_list_response(
-    items: list[Topic],
-    total: int,
-    page: int,
-    page_size: int,
+    view: TopicListView,
 ) -> TopicListResponse:
 
     return TopicListResponse(
-        items=items,
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size
+        items=[
+            TopicResponse.model_validate(item)
+            for item in view.items
+        ],
+        total=view.total,
+        page=view.page,
+        page_size=view.page_size,
+        total_pages=view.total_pages,
     )

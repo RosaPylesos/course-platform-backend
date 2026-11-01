@@ -4,6 +4,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.application.topics.repository import TopicRepository
+from app.application.topics.views import TopicListView
 
 from app.models.topic import Topic
 from app.models.course import Course
@@ -18,7 +19,7 @@ class SqlAlchemyTopicRepository(TopicRepository):
         self,
         page: int,
         page_size: int,
-    ) -> tuple[list[Topic], int]:
+    ) -> TopicListView:
 
         offset = (page - 1) * page_size
 
@@ -37,7 +38,13 @@ class SqlAlchemyTopicRepository(TopicRepository):
 
         total = self.db.scalar(total_statement) or 0
 
-        return items , total
+        return TopicListView(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=(total + page_size - 1) // page_size
+        )
 
     def get_by_id(
         self, 

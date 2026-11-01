@@ -5,14 +5,16 @@ from sqlalchemy.orm import Session, selectinload, aliased
 
 from app.application.courses.repository import CourseRepository
 from app.application.courses.views import (
-    CourseCatalogFilters,
-    CatalogFilterTagCategory,
-    CatalogFilterTopic,
-    CatalogFilterAuthor,
-    CatalogFilterTag,
-    CourseListItem,
-    HomePageSection,
+    CourseCatalogFiltersView,
+    CatalogFilterTagCategoryView,
+    CatalogFilterTopicView,
+    CatalogFilterAuthorView,
+    CatalogFilterTagView,
+    CourseListItemView,
+    CourseListView,
+    HomePageSectionView,
     MyCoursesView,
+    AllCoursesView,
 )
 
 from app.models.enums import (
@@ -41,7 +43,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
         page_size: int,
         sort_by: SortBy,
         sort_order: SortOrder
-    ) -> tuple[list[Course], int]:
+    ) -> AllCoursesView:
 
         offset = (page - 1) * page_size
 
@@ -68,7 +70,13 @@ class SqlAlchemyCourseRepository(CourseRepository):
         total_statement = select(func.count(Course.id))
         total = self.db.scalar(total_statement) or 0
 
-        return items, total
+        return AllCoursesView(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=(total + page_size - 1) // page_size,
+        )
 
     def list_published(self) -> list[Course]:
 
@@ -82,7 +90,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
         preferred_topic_ids: list[UUID] | None = None,
         limit_topics: int = 5,
         courses_per_topic: int = 5,
-    ) -> list[HomePageSection]:
+    ) -> list[HomePageSectionView]:
 
         # Topic counts
         topic_counts = (
@@ -195,21 +203,21 @@ class SqlAlchemyCourseRepository(CourseRepository):
         rows = self.db.execute(course_statement).all()
 
         # Organize courses by topic
-        courses_by_topic: dict[UUID, list[CourseListItem]] = {}
+        courses_by_topic: dict[UUID, list[CourseListItemView]] = {}
 
         for course, count in rows:
             courses_by_topic.setdefault(
                 course.topic_id, []
             ).append(
-                CourseListItem(
+                CourseListItemView(
                     course=course,
                     lesson_count=count,
                 )
             )
 
-        # returns final list of HomePageSection
+        # returns final list of HomePageSectionView
         return [
-            HomePageSection(
+            HomePageSectionView(
                 topic=topic,
                 courses=courses_by_topic[topic.id],
             )
@@ -227,7 +235,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
         include_descendants: bool = False,
         difficulties: list[CourseDifficulty] | None = None,
         tags_ids_by_category: dict[UUID, list[UUID]] | None = None,
-    ) -> tuple[list[CourseListItem], int]:
+    ) -> CourseListView:
 
         filters = [Course.status == CourseStatus.PUBLISHED]
 
@@ -328,16 +336,22 @@ class SqlAlchemyCourseRepository(CourseRepository):
         total = self.db.scalar(count_statement) or 0
 
         items = [
-            CourseListItem(
+            CourseListItemView(
                 course=course,
                 lesson_count=count,
             )
             for course, count in rows
         ]
 
-        return items, total
+        return CourseListView(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=(total + page_size - 1) // page_size,
+        )
 
-    def get_catalog_filters(self) -> CourseCatalogFilters:
+    def get_catalog_filters(self) -> CourseCatalogFiltersView:
 
         published_filter = Course.status == CourseStatus.PUBLISHED
 
@@ -351,7 +365,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
         )
 
         authors = [
-            CatalogFilterAuthor(
+            CatalogFilterAuthorView(
                 id=author.id,
                 name=author.name,
                 surname=author.surname,
@@ -413,7 +427,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
         )
 
         topics = [
-            CatalogFilterTopic(
+            CatalogFilterTopicView(
                 id=topic.id,
                 name=topic.name,
                 parent_id=topic.parent_id,
@@ -435,13 +449,13 @@ class SqlAlchemyCourseRepository(CourseRepository):
         used_tags = self.db.scalars(used_tags_statement).all()
 
         ### TAGS GROUPING
-        tags_by_category: dict[UUID, list[CatalogFilterTag]] = {}
+        tags_by_category: dict[UUID, list[CatalogFilterTagView]] = {}
 
         for tag in used_tags:
             tags_by_category.setdefault(
                 tag.tag_category_id, []
             ).append(
-                CatalogFilterTag(
+                CatalogFilterTagView(
                     id=tag.id,
                     name=tag.name,
                     slug=tag.slug,
@@ -459,7 +473,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
             )
 
             tag_categories = [
-                CatalogFilterTagCategory(
+                CatalogFilterTagCategoryView(
                     id=category.id,
                     name=category.name,
                     tags=tags_by_category[category.id]
@@ -469,7 +483,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
         else:
             tag_categories = []
 
-        return CourseCatalogFilters(
+        return CourseCatalogFiltersView(
             authors=authors,
             topics=topics,
             tag_categories=tag_categories,
@@ -575,7 +589,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
     def get_detail(
         self,
         course_id: UUID,
-    ) -> CourseListItem | None:
+    ) -> CourseListItemView | None:
 
         lesson_count = (
             select(func.count(Lesson.id))
@@ -605,7 +619,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
 
         course, count = row
 
-        return CourseListItem(
+        return CourseListItemView(
             course=course,
             lesson_count=count,
         )

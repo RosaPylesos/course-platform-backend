@@ -2,10 +2,11 @@ from typing import Protocol
 from uuid import UUID
 
 from app.application.courses.views import (
-    CourseCatalogFilters,
-    CourseListItem,
-    HomePageSection,
+    CourseCatalogFiltersView,
+    CourseListView,
+    HomePageSectionView,
     MyCoursesView,
+    AllCoursesView,
 )
 
 from app.models.course import Course
@@ -26,7 +27,7 @@ class CourseRepository(Protocol):
         page_size: int,
         sort_by: SortBy,
         sort_order: SortOrder
-    ) -> tuple[list[Course], int]:
+    ) -> AllCoursesView:
         ...
 
     def list_published(self) -> list[Course]:
@@ -37,7 +38,7 @@ class CourseRepository(Protocol):
         preferred_topic_ids: list[UUID] | None = None,
         limit_topics: int = 5,
         courses_per_topic: int = 5,
-    ) -> list[HomePageSection]:
+    ) -> list[HomePageSectionView]:
         ...
 
     def list_published_for_catalog(
@@ -50,10 +51,10 @@ class CourseRepository(Protocol):
         include_descendants: bool = False,
         difficulty: CourseDifficulty | None = None,
         tags_ids_by_category: dict[UUID, list[UUID]] | None = None,
-    ) -> tuple[list[CourseListItem], int]:
+    ) -> CourseListView:
         ...
 
-    def get_catalog_filters(self) -> CourseCatalogFilters:
+    def get_catalog_filters(self) -> CourseCatalogFiltersView:
         ...
 
     def list_by_author(

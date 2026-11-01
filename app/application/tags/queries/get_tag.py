@@ -8,15 +8,18 @@ from app.models.tag import Tag
 
 
 class GetTagQuery:
-    def __init__(self, repository: TagRepository) -> None:
-        self.repository = repository
+    def __init__(
+        self, 
+        tag_repository: TagRepository,
+    ) -> None:
+        self.tag_repository = tag_repository
 
     def execute(
         self,
         tag_id: UUID,
     ) -> Tag:
 
-        tag = self.repository.get_by_id(tag_id)
+        tag = self.tag_repository.get_by_id(tag_id)
 
         if tag is None:
             raise ResourceNotFoundError("Tag not found")

@@ -4,6 +4,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.application.tags.repository import TagRepository
+from app.application.tags.views import TagListView
 
 from app.models.tag import Tag
 from app.models.course_tag import CourseTag
@@ -19,7 +20,7 @@ class SqlAlchemyTagRepository(TagRepository):
         page: int,
         page_size: int,
         tag_category_id: UUID | None = None,
-    ) -> tuple[list[Tag], int]:
+    ) -> TagListView:
 
         offset = (page - 1) * page_size
 
@@ -46,7 +47,13 @@ class SqlAlchemyTagRepository(TagRepository):
         items = list(self.db.scalars(statement).all())
         total = self.db.scalar(total_statement) or 0
 
-        return items, total
+        return TagListView(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=(total + page_size - 1) // page_size
+        )
 
     def get_by_id(
         self,
