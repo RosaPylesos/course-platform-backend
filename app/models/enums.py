@@ -19,3 +19,11 @@ class CourseStatus(str, Enum):
     PUBLISHED   = "published"
     DRAFT       = "draft"
     ARCHIVED    = "archived"
+
+class SortBy(str, Enum):
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+class SortOrder(str, Enum):
+    ASC   = "asc"
+    DESC  = "desc"

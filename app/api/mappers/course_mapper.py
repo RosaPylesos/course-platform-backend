@@ -17,6 +17,9 @@ from app.schemas.course import (
     MyCourseListResponse,
     MyCourseListItemResponse,
     MyCourseDetailResponse,
+    ManagedCourseListResponse,
+    ManagedCourseListItemResponse,
+    CourseListResponse,
 )
 from app.schemas.home_page import (
     HomePageResponse,
@@ -43,6 +46,24 @@ def to_course_list_item_response(
             course_tag.tag for course_tag in item.course.course_tags
         ],
         lesson_count=item.lesson_count
+    )
+
+def to_course_list_response(
+    items: list[CourseListItem],
+    total: int,
+    page: int,
+    page_size: int,
+) -> CourseListResponse:
+
+    return CourseListResponse(
+        items=[
+            to_course_list_item_response(item)
+            for item in items
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
     )
 
 def to_course_catalog_filters_response(
@@ -147,4 +168,24 @@ def to_my_course_detail_response(
         ],
         created_at=course.created_at,
         updated_at=course.updated_at,
+    )
+
+def to_managed_course_list_response(
+    items: list[Course],
+    total: int,
+    page: int,
+    page_size: int,
+) -> ManagedCourseListResponse:
+
+    return ManagedCourseListResponse(
+        items=[
+            ManagedCourseListItemResponse.model_validate(
+                course
+            )
+            for course in items
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
     )

@@ -41,3 +41,21 @@ class LessonListItemResponse(BaseModel):
     name: str
     description: str | None
     position: int
+
+class ManagedLessonListItemResponse(BaseModel):
+    id: UUID
+    course_id: UUID
+    name: str
+    description: str | None
+    position: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ManagedLessonListResponse(BaseModel):
+    items: list[ManagedLessonListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

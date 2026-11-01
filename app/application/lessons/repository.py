@@ -1,15 +1,27 @@
 from typing import Protocol
 from uuid import UUID
 
+from app.application.lessons.views import AllLessonsView
+
 from app.models.lesson import Lesson
+from app.models.enums import SortBy, SortOrder
 
 
 
 class LessonRepository(Protocol):
 
+    def list_all(
+        self,
+        page: int,
+        page_size: int,
+        sort_by: SortBy,
+        sort_order: SortOrder,
+    ) -> AllLessonsView:
+        ...
+
     def list_by_course(
         self, 
-        course_id: UUID
+        course_id: UUID,
     ) -> list[Lesson]:
         ...
 
@@ -22,7 +34,7 @@ class LessonRepository(Protocol):
 
     def count_by_course(
         self,
-        course_id: UUID
+        course_id: UUID,
     ) -> int:
         ...
 

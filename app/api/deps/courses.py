@@ -10,6 +10,7 @@ from app.application.courses.queries import (
     GetMyCourseQuery,
     GetMyCoursesQuery,
     GetCoursesQuery,
+    GetAllCoursesQuery,
 )
 from app.application.courses.resolve_catalog_filters import (
     ResolveCatalogFilters,
@@ -51,4 +52,12 @@ def get_course_catalog_query(
             topic_repo=SqlAlchemyTopicRepository(db),
             tag_repo=SqlAlchemyTagRepository(db),
         ),
+    )
+
+def get_all_courses_query(
+    db: Annotated[Session, Depends(get_db)],
+) -> GetAllCoursesQuery:
+
+    return GetAllCoursesQuery(
+        SqlAlchemyCourseRepository(db),
     )

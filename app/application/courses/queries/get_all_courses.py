@@ -1,13 +1,33 @@
+from dataclasses import dataclass
+
 from app.application.courses.repository import CourseRepository
 
 from app.models.course import Course
+from app.models.enums import SortBy, SortOrder
+
+
+
+@dataclass(frozen=True)
+class GetAllCoursesInput:
+    page: int
+    page_size: int
+    sort_by: SortBy
+    sort_order: SortOrder
 
 
 
 class GetAllCoursesQuery:
-    def __init__(self, repository: CourseRepository) -> None:
-        self.repository = repository
+    def __init__(self, course_repository: CourseRepository) -> None:
+        self.course_repository = course_repository
 
-    def execute(self) -> list[Course]:
+    def execute(
+        self,
+        input: GetAllCoursesInput,
+    ) -> tuple[list[Course], int]:
 
-        return self.repository.list_all()
+        return self.course_repository.list_all(
+            page=input.page,
+            page_size=input.page_size,
+            sort_by=input.sort_by,
+            sort_order=input.sort_order
+        )

@@ -5,14 +5,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.api.deps.lessons import get_all_lessons_query
 from app.api.dependencies import get_db, require_roles, get_current_user
 from app.api.mappers.lesson_mapper import (
     to_lesson_list_item_response,
+    to_managed_lesson_list_response,
 )
+from app.api.schemas.lesson_list import ManagedLessonListParams
 
 from app.application.lessons.queries import (
     GetLessonQuery,
     GetLessonsQuery,
+    GetAllLessonsQuery,
+    GetAllLessonsInput,
 )
 from app.application.lessons.commands import (
     CreateLessonCommand,
@@ -37,12 +42,18 @@ from app.schemas.lesson import (
     LessonUpdate,
     LessonReorder,
     LessonListItemResponse,
+    ManagedLessonListResponse,
 )
 from app.schemas.lesson_progress import LessonProgressResponse
 
 router = APIRouter (
     prefix="/courses/{course_id}/lessons", 
     tags=["Lessons"]
+)
+
+adm_router = APIRouter(
+    prefix="/admin/lessons",
+    tags=["Temporary Admin Router"]
 )
 
 @router.get(
@@ -86,6 +97,33 @@ def get_lesson(
         lesson_id=lesson_id,
         user=current_user,
     )
+
+@adm_router.get(
+    "/manage",
+    response_model=ManagedLessonListResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_all_lessons(
+    current_user: Annotated[
+        User,
+        Depends(
+            require_roles(UserRole.ADMIN)
+        ),
+    ],
+    query: Annotated[
+        GetAllLessonsQuery,
+        Depends(get_all_lessons_query),
+    ],
+    params: Annotated[
+        ManagedLessonListParams,
+        Depends(),
+    ],
+) -> ManagedLessonListResponse:
+
+    input = GetAllLessonsInput(**params.model_dump())
+    result = query.execute(input)
+
+    return to_managed_lesson_list_response(result)
 
 @router.post(
     "/{lesson_id}/start",

@@ -12,23 +12,28 @@ from sqlalchemy.orm import Session
 
 from app.api.schemas.course_catalog import CourseCatalogParams
 from app.api.schemas.my_course import MyCoursesParams
+from app.api.schemas.manage_course import (
+    ManagedCourseListParams,
+)
 
 from app.api.deps.courses import (
     get_my_courses_query,
     get_my_course_query,
     get_course_catalog_query,
+    get_all_courses_query,
 )
 
 from app.api.dependencies import (
     get_db, 
     require_roles, 
-    get_current_user
+    get_current_user,
 )
 from app.api.mappers.course_mapper import (
-    to_course_list_item_response,
+    to_course_list_response,
     to_course_catalog_filters_response,
     to_my_courses_response,
     to_my_course_detail_response,
+    to_managed_course_list_response,
 )
 
 from app.models.course import Course
@@ -46,6 +51,7 @@ from app.application.courses.queries import (
     GetCourseCatalogFiltersQuery,
     GetCoursesInput,
     GetMyCoursesInput,
+    GetAllCoursesInput,
 )
 from app.application.courses.commands import (
     CreateCourseCommand,
@@ -73,6 +79,7 @@ from app.schemas.course import (
     CourseListResponse,
     CourseListItemResponse,
     CourseCatalogFiltersResponse,
+    ManagedCourseListResponse,
     MyCourseListResponse,
     MyCourseDetailResponse,
 )
@@ -99,17 +106,13 @@ def get_courses(
 ) -> CourseListResponse:
 
     input = GetCoursesInput(**params.model_dump())
-    
     items, total = query.execute(input)
-    return CourseListResponse(
-        items = [
-        to_course_list_item_response(item)
-        for item in items
-    ],
-    total=total,
-    page=params.page,
-    page_size=params.page_size,
-    total_pages=(total+params.page_size - 1) // params.page_size,
+    
+    return to_course_list_response(
+        items=items, 
+        total=total, 
+        page=params.page, 
+        page_size=params.page_size,
     )
 
 @router.get(
@@ -191,7 +194,7 @@ def get_my_course(
 
 @router.get(
     "/manage",
-    response_model=list[CourseResponse],
+    response_model=ManagedCourseListResponse,
     status_code=status.HTTP_200_OK,
 )
 def get_all_courses(
@@ -199,13 +202,21 @@ def get_all_courses(
         User,
         Depends(require_roles(UserRole.ADMIN)),
     ],
-    db: Annotated[Session, Depends(get_db)],
-) -> list[Course]:
+    query: Annotated[
+        GetAllCoursesQuery,
+        Depends(get_all_courses_query),
+    ],
+    params: Annotated[
+        ManagedCourseListParams,
+        Depends(),
+    ],
+) -> ManagedCourseListResponse:
 
-    query = GetAllCoursesQuery(
-        SqlAlchemyCourseRepository(db)
+    input = GetAllCoursesInput(**params.model_dump())
+    items, total = query.execute(input)
+    return to_managed_course_list_response(
+        items, total, params.page, params.page_size
     )
-    return query.execute()
 
 @router.get(
     "/{course_id}", 

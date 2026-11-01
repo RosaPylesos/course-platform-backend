@@ -43,7 +43,12 @@ class CreateTopicCommand:
         )
 
         self.uow.topics.add(topic)
-        self.uow.commit()
-        self.uow.refresh(topic)
+
+        try:
+            self.uow.commit()
+            self.uow.refresh(topic)
+        except Exception:
+            self.uow.rollback()
+            raise
 
         return topic

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select, func, exists
+from sqlalchemy import asc, select, func, exists, desc
 from sqlalchemy.orm import Session, selectinload, aliased
 
 from app.application.courses.repository import CourseRepository
@@ -15,7 +15,12 @@ from app.application.courses.views import (
     MyCoursesView,
 )
 
-from app.models.enums import CourseStatus, CourseDifficulty
+from app.models.enums import (
+    CourseStatus, 
+    CourseDifficulty,
+    SortBy,
+    SortOrder,
+)
 from app.models.course_tag import CourseTag
 from app.models.course import Course
 from app.models.lesson import Lesson
@@ -30,13 +35,40 @@ class SqlAlchemyCourseRepository(CourseRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_all(self) -> list[Course]:
+    def list_all(
+        self,
+        page: int,
+        page_size: int,
+        sort_by: SortBy,
+        sort_order: SortOrder
+    ) -> tuple[list[Course], int]:
+
+        offset = (page - 1) * page_size
+
+        sort_column = {
+            SortBy.CREATED_AT: Course.created_at,
+            SortBy.UPDATED_AT: Course.updated_at,
+        }[sort_by]
+
+        order_column = (
+            asc(sort_column)
+            if sort_order == SortOrder.ASC 
+            else desc(sort_column)
+        )
 
         statement = (
             select(Course)
-            .order_by(Course.created_at.desc(), Course.id)
+            .order_by(order_column, Course.id)
+            .offset(offset)
+            .limit(page_size)
         )
-        return list(self.db.scalars(statement).all())
+
+        items = list(self.db.scalars(statement).all())
+
+        total_statement = select(func.count(Course.id))
+        total = self.db.scalar(total_statement) or 0
+
+        return items, total
 
     def list_published(self) -> list[Course]:
 
@@ -464,12 +496,17 @@ class SqlAlchemyCourseRepository(CourseRepository):
                 ),
             )
             .order_by(Course.created_at.desc(), Course.id)
-            # .offset(offset)
-            # .limit(page_size)
+            
         )
 
         if status is not None:
             statement = statement.where(Course.status == status)
+
+        statement = (
+            statement
+            .offset(offset)
+            .limit(page_size)
+        )
 
         items = list(self.db.scalars(statement).all())
 

@@ -12,6 +12,8 @@ from app.api.routers.tags import router as tags_router
 from app.api.routers.user_topics import router as user_topics_router
 from app.api.routers.home_page import router as home_page_router
 
+from app.api.routers.lessons import adm_router as temp_adm_router
+
 #EXCEPTIONS AND HANDLERS
 from app.api.exception_handlers import (
     business_rule_handler,
@@ -79,3 +81,5 @@ app.include_router(topics_router)
 app.include_router(tag_categories_router)
 app.include_router(tags_router)
 app.include_router(user_topics_router)
+
+app.include_router(temp_adm_router)

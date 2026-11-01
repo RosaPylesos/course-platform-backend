@@ -83,7 +83,11 @@ class UpdateTopicCommand:
         for field, value in update_data.items():
             setattr(topic, field, value)
 
-        self.uow.commit()
-        self.uow.refresh(topic)
+        try:
+            self.uow.commit()
+            self.uow.refresh(topic)
+        except Exception:
+            self.uow.rollback()
+            raise
 
         return topic

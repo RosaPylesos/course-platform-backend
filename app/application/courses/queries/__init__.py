@@ -8,3 +8,4 @@ from app.application.courses.queries.get_all_courses import GetAllCoursesQuery
 from app.application.courses.queries.get_my_course import GetMyCourseQuery
 from app.application.courses.queries.get_course_catalog_filters import GetCourseCatalogFiltersQuery
 from app.application.courses.queries.get_home_page import GetHomePageQuery
+from app.application.courses.queries.get_all_courses import GetAllCoursesInput

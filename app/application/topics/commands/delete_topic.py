@@ -29,4 +29,9 @@ class DeleteTopicCommand:
             raise ConflictError("Cannot delete a topic that has courses")
 
         self.uow.topics.delete(topic)
-        self.uow.commit()
+
+        try:
+            self.uow.commit()
+        except Exception:
+            self.uow.rollback()
+            raise

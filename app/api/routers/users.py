@@ -8,20 +8,24 @@ from sqlalchemy.orm import Session
 
 from app.api.mappers.user_mapper import (
     to_user_profile_response,
+    to_user_list_response,
 )
 from app.api.dependencies import (
     get_db, 
     get_current_user,
     require_roles,
 )
-from app.api.deps.user_profile import (
+from app.api.deps.users import (
     get_my_profile_query,
+    get_all_users_query,
 )
+from app.api.schemas.user_list import UserListParams
 
 from app.application.users.queries import (
     AuthenticateUserQuery,
-    ListUsersQuery,
+    GetAllUsersQuery,
     GetMyProfileQuery,
+    GetAllUsersInput,
 )
 from app.application.users.commands import (
     RegisterUserCommand,
@@ -37,10 +41,12 @@ from app.infrastructure.unit_of_work import (
 
 from app.models.user import User
 from app.models.enums import UserRole
+
 from app.schemas.user import (
     UserRegister, 
     UserResponse,
     UserProfileResponse,
+    UserListResponse,
     UserLogin,
     TokenResponse,
 )
@@ -120,22 +126,28 @@ def get_me(
 
 @router.get(
     "/",
-    response_model=list[UserResponse],
+    response_model=UserListResponse,
     status_code=status.HTTP_200_OK,
 )
-def list_users(
+def get_all_users(
     current_user: Annotated[
         User,
         Depends(require_roles(UserRole.ADMIN)),
     ],
-    db: Annotated[Session, Depends(get_db)],
-) -> list[User]:
+    query: Annotated[
+        GetAllUsersQuery, 
+        Depends(get_all_users_query),
+    ],
+    params: Annotated[
+        UserListParams, 
+        Depends(),
+    ],
+) -> UserListResponse:
 
-    query = ListUsersQuery(
-        SqlAlchemyUserRepository(db)
-    )
-    return query.execute()
-
+    input = GetAllUsersInput(**params.model_dump())
+    result = query.execute(input)
+    return to_user_list_response(result)
+    
 @router.patch(
     "/{user_id}/role",
     status_code=status.HTTP_204_NO_CONTENT,

@@ -9,13 +9,24 @@ from app.application.courses.views import (
 )
 
 from app.models.course import Course
-from app.models.enums import CourseDifficulty, CourseStatus
+from app.models.enums import (
+    CourseDifficulty, 
+    CourseStatus,
+    SortBy,
+    SortOrder,
+)
 
 
 
 class CourseRepository(Protocol):
 
-    def list_all(self) -> list[Course]:
+    def list_all(
+        self,
+        page: int,
+        page_size: int,
+        sort_by: SortBy,
+        sort_order: SortOrder
+    ) -> tuple[list[Course], int]:
         ...
 
     def list_published(self) -> list[Course]:

@@ -1,7 +1,10 @@
 from typing import Protocol
 from uuid import UUID
 
+from app.application.users.views import AllUsersView
+
 from app.models.user import User
+from app.models.enums import SortBy, SortOrder
 
 
 
@@ -25,7 +28,13 @@ class UserRepository(Protocol):
     ) -> User | None:
         ...
 
-    def list_all(self) -> list[User]:
+    def list(
+        self,
+        page: int,
+        page_size: int,
+        sort_by: SortBy,
+        sort_order: SortOrder,
+    ) -> AllUsersView:
         ...
 
     def add(

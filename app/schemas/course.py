@@ -7,7 +7,6 @@ from app.models.enums import CourseDifficulty, CourseStatus
 
 from app.schemas.tag import TagResponse
 from app.schemas.topic import TopicResponse
-from app.schemas.author import CourseAuthorResponse
 
 class CourseCreate(BaseModel):
     topic_id: UUID
@@ -42,6 +41,13 @@ class CourseResponse(BaseModel):
         default_factory=list
     )
     
+    model_config = ConfigDict(from_attributes=True)
+
+class CourseAuthorResponse(BaseModel):
+    id: UUID
+    name: str
+    surname: str | None
+
     model_config = ConfigDict(from_attributes=True)
 
 class CourseListItemResponse(BaseModel):
@@ -103,6 +109,25 @@ class MyCourseDetailResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class ManagedCourseListItemResponse(BaseModel):
+    id: UUID
+    name: str
+    author_id: UUID
+    topic_id: UUID
+    status: CourseStatus
+    difficulty: CourseDifficulty
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ManagedCourseListResponse(BaseModel):
+    items: list[ManagedCourseListItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 class CatalogFilterAuthorResponse(BaseModel):
     id: UUID
