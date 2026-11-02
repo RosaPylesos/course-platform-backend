@@ -1,16 +1,5 @@
-from uuid import UUID
-from dataclasses import dataclass
-
 from app.application.tag_categories.repository import TagCategoryRepository
-
-from app.models.tag_category import TagCategory
-
-
-
-@dataclass(frozen=True)
-class GetTagCategoriesInput:
-    page: int
-    page_size: int
+from app.application.tag_categories.views import PublicTagCategoryView
 
 
 
@@ -21,12 +10,6 @@ class GetTagCategoriesQuery:
     ) -> None:
         self.category_repository = category_repository
 
-    def execute(
-        self,
-        input: GetTagCategoriesInput,
-    ) -> list[TagCategory]:
+    def execute(self) -> list[PublicTagCategoryView]:
         
-        return self.category_repository.list(
-            page=input.page,
-            page_size=input.page_size,
-        )
+        return self.category_repository.list_all_with_tags()

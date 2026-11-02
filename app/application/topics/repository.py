@@ -1,7 +1,9 @@
 from typing import Protocol
 from uuid import UUID
 
-from app.application.topics.views import TopicListView
+from app.application.topics.views import (
+    TopicListView, 
+)
 
 from app.models.topic import Topic
 
@@ -9,7 +11,10 @@ from app.models.topic import Topic
 
 class TopicRepository(Protocol):
     
-    def list(
+    def list(self) -> list[Topic]:
+        ...
+
+    def list_all(
         self,
         page: int,
         page_size: int,

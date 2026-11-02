@@ -1,17 +1,25 @@
 from typing import Protocol
 from uuid import UUID
 
+from app.application.tag_categories.views import (
+    TagCategoryListView,
+    PublicTagCategoryView,
+)
+
 from app.models.tag_category import TagCategory
 
 
 
 class TagCategoryRepository(Protocol):
     
-    def list(
+    def list_all_with_tags(self) -> list[PublicTagCategoryView]:
+        ...
+
+    def list_all(
         self,
         page: int,
         page_size: int,
-    ) -> tuple[list[TagCategory], int]:
+    ) -> TagCategoryListView:
         ...
 
     def get_by_id(

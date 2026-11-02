@@ -5,40 +5,22 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.mappers.topic_mapper import (
-    to_topics_list_response,
-)
-from app.api.dependencies import get_db, require_roles
-from app.api.deps.topics import get_topics_query
-from app.api.schemas.topics import TopicListParams
+from app.api.dependencies import get_db
 
 from app.application.topics.queries import (
     GetTopicsQuery,
     GetTopicQuery,
-    GetTopicsInput,
-)
-from app.application.topics.commands import (
-    CreateTopicCommand,
-    UpdateTopicCommand,
-    DeleteTopicCommand,
 )
 
 from app.infrastructure.topic_repository import (
     SqlAlchemyTopicRepository,
 )
-from app.infrastructure.unit_of_work import (
-    SqlAlchemyUnitOfWork,
-)
 
 from app.models.topic import Topic
-from app.models.user import User
-from app.models.enums import UserRole
 
 from app.schemas.topic import (
-    TopicCreate, 
     TopicResponse, 
-    TopicUpdate,
-    TopicListResponse,
+    PublicTopicResponse,
 )
 
 router = APIRouter(
@@ -48,26 +30,17 @@ router = APIRouter(
 
 @router.get(
     "/", 
-    response_model=TopicListResponse,
+    response_model=list[PublicTopicResponse],
     status_code=status.HTTP_200_OK,
 )
 def get_topics(
-    query: Annotated[
-        GetTopicsQuery,
-        Depends(get_topics_query),
-    ],
-    params: Annotated[
-        TopicListParams,
-        Depends(),
-    ]
-) -> TopicListResponse:
+    db: Annotated[Session, Depends(get_db)],
+) -> list[Topic]:
     
-    input = GetTopicsInput(
-        **params.model_dump()
+    query = GetTopicsQuery(
+        SqlAlchemyTopicRepository(db),
     )
-    result = query.execute(input)
-    
-    return to_topics_list_response(result)
+    return query.execute()
 
 @router.get(
     "/{topic_id}", 
@@ -83,63 +56,3 @@ def get_topic(
         SqlAlchemyTopicRepository(db)
     )
     return query.execute(topic_id)
-
-@router.post(
-    "/", 
-    response_model=TopicResponse, 
-    status_code=status.HTTP_201_CREATED,
-)
-def create_topic(
-    topic_data: TopicCreate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
-) -> Topic:
-
-    command = CreateTopicCommand(
-        SqlAlchemyUnitOfWork(db)
-    )
-    return command.execute(topic_data)
-
-@router.patch(
-    "/{topic_id}", 
-    response_model=TopicResponse,
-    status_code=status.HTTP_200_OK,
-)
-def update_topic(
-    topic_id: UUID,
-    topic_data: TopicUpdate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
-) -> Topic:
-
-    command = UpdateTopicCommand(
-        SqlAlchemyUnitOfWork(db)
-    )
-    return command.execute(
-        topic_id,
-        topic_data,
-    )
-
-@router.delete(
-    "/{topic_id}", 
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-def delete_topic(
-    topic_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
-) -> None:
-    
-    command = DeleteTopicCommand(
-        SqlAlchemyUnitOfWork(db)
-    )
-    command.execute(topic_id)

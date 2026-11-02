@@ -31,3 +31,10 @@ class TagListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+class PublicTagResponse(BaseModel):
+    id: UUID
+    name: str
+    slug: str
+
+    model_config = ConfigDict(from_attributes=True)

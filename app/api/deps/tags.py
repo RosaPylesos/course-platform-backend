@@ -7,10 +7,10 @@ from fastapi import Depends
 from app.api.dependencies import get_db
 
 from app.application.tags.queries import (
-    GetTagsQuery,
+    GetAllTagsQuery,
 )
 from app.application.tag_categories.queries import (
-    GetTagCategoriesQuery,
+    GetAllTagCategoriesQuery,
 )
 
 from app.infrastructure.tag_category_repository import (
@@ -20,18 +20,18 @@ from app.infrastructure.tag_repository import (
     SqlAlchemyTagRepository,
 )
 
-def get_tag_categories_query(
+def get_all_tag_categories_query(
     db: Annotated[Session, Depends(get_db)],
-) -> GetTagCategoriesQuery:
+) -> GetAllTagCategoriesQuery:
 
-    return GetTagCategoriesQuery(
+    return GetAllTagCategoriesQuery(
         SqlAlchemyTagCategoryRepository(db),
     )
 
-def get_tags_query(
+def get_all_tags_query(
     db: Annotated[Session, Depends(get_db)],
-) -> GetTagsQuery:
+) -> GetAllTagsQuery:
 
-    return GetTagsQuery(
+    return GetAllTagsQuery(
         SqlAlchemyTagRepository(db),
     )

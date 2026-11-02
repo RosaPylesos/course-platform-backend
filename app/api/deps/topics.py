@@ -7,17 +7,17 @@ from fastapi import Depends
 from app.api.dependencies import get_db
 
 from app.application.topics.queries import (
-    GetTopicsQuery,
+    GetAllTopicsQuery,
 )
 
 from app.infrastructure.topic_repository import (
     SqlAlchemyTopicRepository,
 )
 
-def get_topics_query(
+def get_all_topics_query(
     db: Annotated[Session, Depends(get_db)],
-) -> GetTopicsQuery:
+) -> GetAllTopicsQuery:
 
-    return GetTopicsQuery(
+    return GetAllTopicsQuery(
         SqlAlchemyTopicRepository(db),
     )

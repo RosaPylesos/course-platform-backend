@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.tag import PublicTagResponse
+
 class TagCategoryCreate(BaseModel):
     name: str = Field(
         min_length=1,
@@ -28,3 +30,10 @@ class TagCategoryListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+class PublicTagCategoryResponse(BaseModel):
+    id: UUID
+    name: str
+    tags: list[PublicTagResponse]
+
+    model_config = ConfigDict(from_attributes=True)

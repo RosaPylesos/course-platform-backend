@@ -7,14 +7,14 @@ from app.application.tags.views import TagListView
 
 
 @dataclass(frozen=True)
-class GetTagsInput:
+class GetAllTagsInput:
     page: int
     page_size: int
     tag_category_id: UUID | None = None
 
 
 
-class GetTagsQuery:
+class GetAllTagsQuery:
     def __init__(
         self, 
         tag_repository: TagRepository,
@@ -23,10 +23,10 @@ class GetTagsQuery:
 
     def execute(
         self,
-        input: GetTagsInput,
+        input: GetAllTagsInput,
     ) -> TagListView:
 
-        return self.tag_repository.list(
+        return self.tag_repository.list_all(
             page=input.page,
             page_size=input.page_size,
             tag_category_id=input.tag_category_id,

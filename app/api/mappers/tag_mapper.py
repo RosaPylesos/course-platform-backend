@@ -1,24 +1,27 @@
 from app.application.tags.views import TagListView
+from app.application.tag_categories.views import (
+    TagCategoryListView
+)
 
-from app.models.tag_category import TagCategory
-from app.models.tag import Tag
-
-from app.schemas.tag_category import TagCategoryListResponse
+from app.schemas.tag_category import (
+    TagCategoryListResponse,
+    TagCategoryResponse,
+)
 from app.schemas.tag import TagListResponse, TagResponse
 
 def to_tag_categories_list_response(
-    items: list[TagCategory],
-    total: int,
-    page: int,
-    page_size: int,
+    view: TagCategoryListView
 ) -> TagCategoryListResponse:
 
     return TagCategoryListResponse(
-        items=items,
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size,
+        items=[
+            TagCategoryResponse.model_validate(category)
+            for category in view.items
+        ],
+        total=view.total,
+        page=view.page,
+        page_size=view.page_size,
+        total_pages=view.total_pages,
     )
 
 def to_tag_list_response(

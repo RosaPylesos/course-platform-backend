@@ -1,9 +1,14 @@
 from uuid import UUID
 
 from sqlalchemy import select, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.application.tag_categories.repository import TagCategoryRepository
+from app.application.tag_categories.views import (
+    TagCategoryListView,
+    PublicTagCategoryView,
+    PublicTagView,
+)
 
 from app.models.tag_category import TagCategory
 from app.models.tag import Tag
@@ -14,12 +19,41 @@ class SqlAlchemyTagCategoryRepository(TagCategoryRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list(
+    def list_all_with_tags(self) -> list[PublicTagCategoryView]:
+
+        statement = (
+            select(TagCategory)
+            .options(selectinload(TagCategory.tags))
+            .order_by(TagCategory.name, TagCategory.id)
+        )
+
+        categories = self.db.scalars(statement).all()
+
+        return [
+            PublicTagCategoryView(
+                id=category.id,
+                name=category.name,
+                tags=[
+                    PublicTagView(
+                        id=tag.id,
+                        name=tag.name,
+                        slug=tag.slug,
+                    )
+                    for tag in sorted(
+                        category.tags,
+                        key=lambda item: (item.name, item.id)
+                    )
+                ],
+            ) 
+            for category in categories
+        ]
+
+    def list_all(
         self,
         page: int,
         page_size: int,
-    ) -> tuple[list[TagCategory], int]:
-
+    ) -> TagCategoryListView:
+        
         offset = (page - 1) * page_size
 
         statement = (
@@ -37,7 +71,13 @@ class SqlAlchemyTagCategoryRepository(TagCategoryRepository):
 
         total = self.db.scalar(total_statement) or 0
 
-        return items, total
+        return TagCategoryListView(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=(total * page_size - 1) // page_size
+        )
 
     def get_by_id(
         self,

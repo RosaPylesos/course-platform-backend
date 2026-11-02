@@ -28,3 +28,13 @@ class TopicListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+class PublicTopicResponse(BaseModel):
+    id: UUID
+    name: str
+    slug: str
+    children: list["PublicTopicResponse"] = Field(
+        default_factory=list,
+    )
+
+PublicTopicResponse.model_rebuild()

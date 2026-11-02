@@ -12,15 +12,11 @@ from sqlalchemy.orm import Session
 
 from app.api.schemas.course_catalog import CourseCatalogParams
 from app.api.schemas.my_course import MyCoursesParams
-from app.api.schemas.manage_course import (
-    ManagedCourseListParams,
-)
 
 from app.api.deps.courses import (
     get_my_courses_query,
     get_my_course_query,
     get_course_catalog_query,
-    get_all_courses_query,
 )
 
 from app.api.dependencies import (
@@ -34,7 +30,6 @@ from app.api.mappers.course_mapper import (
     to_course_catalog_filters_response,
     to_my_courses_response,
     to_my_course_detail_response,
-    to_managed_course_list_response,
 )
 
 from app.models.course import Course
@@ -47,12 +42,10 @@ from app.application.courses.queries import (
     GetCourseQuery,
     GetCourseProgressQuery,
     GetMyCoursesQuery,
-    GetAllCoursesQuery,
     GetMyCourseQuery,
     GetCourseCatalogFiltersQuery,
     GetCoursesInput,
     GetMyCoursesInput,
-    GetAllCoursesInput,
 )
 from app.application.courses.commands import (
     CreateCourseCommand,
@@ -80,7 +73,6 @@ from app.schemas.course import (
     CourseListResponse,
     CourseListItemResponse,
     CourseCatalogFiltersResponse,
-    ManagedCourseListResponse,
     MyCourseListResponse,
     MyCourseDetailResponse,
 )
@@ -187,32 +179,6 @@ def get_my_course(
         author_id=current_user.id,
     )
     return to_my_course_detail_response(course)
-
-@router.get(
-    "/manage",
-    response_model=ManagedCourseListResponse,
-    status_code=status.HTTP_200_OK,
-)
-def get_all_courses(
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
-    query: Annotated[
-        GetAllCoursesQuery,
-        Depends(get_all_courses_query),
-    ],
-    params: Annotated[
-        ManagedCourseListParams,
-        Depends(),
-    ],
-) -> ManagedCourseListResponse:
-
-    input = GetAllCoursesInput(**params.model_dump())
-    result = query.execute(input)
-    return to_managed_course_list_response(
-        result
-    )
 
 @router.get(
     "/{course_id}", 

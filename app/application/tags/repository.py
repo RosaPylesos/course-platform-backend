@@ -16,6 +16,13 @@ class TagRepository(Protocol):
         tag_category_id: UUID | None = None,
     ) -> TagListView: ...
 
+    def list_all(
+        self,
+        page: int,
+        page_size: int,
+        tag_category_id: UUID | None = None,
+    ) -> TagListView: ...
+
     def get_by_id(
         self, 
         tag_id: UUID

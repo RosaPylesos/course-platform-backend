@@ -4,7 +4,9 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.application.topics.repository import TopicRepository
-from app.application.topics.views import TopicListView
+from app.application.topics.views import (
+    TopicListView,
+)
 
 from app.models.topic import Topic
 from app.models.course import Course
@@ -15,7 +17,18 @@ class SqlAlchemyTopicRepository(TopicRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list(
+    def list(self) -> list[Topic]:
+
+        statement = (
+            select(Topic)
+            .order_by(Topic.name, Topic.id)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )
+
+    def list_all(
         self,
         page: int,
         page_size: int,
