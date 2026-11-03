@@ -42,9 +42,8 @@ class CreateTopicCommand:
             slug = slug
         )
 
-        self.uow.topics.add(topic)
-
         try:
+            self.uow.topics.add(topic)
             self.uow.commit()
             self.uow.refresh(topic)
         except Exception:

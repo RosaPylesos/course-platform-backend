@@ -1,4 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+from app.api.dependencies import require_roles
+from app.models.enums import UserRole
 
 from app.api.routers.admin import (
     courses,
@@ -10,6 +13,7 @@ from app.api.routers.admin import (
 )
 router = APIRouter(
     prefix="/admin",
+    dependencies=[Depends(require_roles(UserRole.ADMIN))],
 )
 
 

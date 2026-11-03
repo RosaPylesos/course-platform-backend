@@ -4,9 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from sqlalchemy.orm import Session
-
-from app.api.dependencies import get_current_user, get_db
+from app.api.dependencies import get_current_user, Db_Session
 from app.api.mappers.enrollment_mapper import (
     to_my_enrollments_response,
 )
@@ -45,7 +43,7 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_my_enrollments(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> MyEnrollmentsResponse:
 
@@ -61,7 +59,7 @@ def get_my_enrollments(
 )
 def create_enrollment(
     enrollment_data: EnrollmentCreate,
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:
 
@@ -81,7 +79,7 @@ def create_enrollment(
 )
 def cancel_enrollment(
     enrollment_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:
 
@@ -101,7 +99,7 @@ def cancel_enrollment(
 )
 def restore_enrollment(
     enrollment_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Enrollment:
     

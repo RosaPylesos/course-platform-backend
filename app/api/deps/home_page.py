@@ -1,9 +1,4 @@
-from typing import Annotated
-
-from fastapi import Depends
-from sqlalchemy.orm import Session
-
-from app.api.dependencies import get_db
+from app.api.dependencies import Db_Session
 
 from app.application.courses.queries import (
     GetHomePageQuery,
@@ -17,7 +12,7 @@ from app.infrastructure.user_topic_repository import (
 )
 
 def get_home_page_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetHomePageQuery:
     
     return GetHomePageQuery(

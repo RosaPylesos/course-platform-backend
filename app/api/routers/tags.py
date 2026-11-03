@@ -1,10 +1,8 @@
 from uuid import UUID
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, status
 
-from app.api.dependencies import get_db
+from app.api.dependencies import Db_Session
 
 from app.application.tags.queries import (
     GetTagQuery,
@@ -32,7 +30,7 @@ router = APIRouter(
 )
 def get_tag(
     tag_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> Tag:
 
     query = GetTagQuery(

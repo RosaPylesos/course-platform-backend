@@ -1,9 +1,8 @@
 from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, status, Depends
-from sqlalchemy.orm import Session
 
-from app.api.dependencies import require_roles, get_db
+from app.api.dependencies import Db_Session
 from app.api.deps.tags import get_all_tags_query
 from app.api.schemas.tags import TagListParams
 from app.api.mappers.tag_mapper import (
@@ -24,8 +23,6 @@ from app.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
 
-from app.models.user import User
-from app.models.enums import UserRole
 from app.models.tag import Tag
 
 from app.schemas.tag import (
@@ -46,12 +43,6 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_all_tags(
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(UserRole.ADMIN)
-        ),
-    ],
     query: Annotated[
         GetAllTagsQuery,
         Depends(get_all_tags_query),
@@ -73,11 +64,7 @@ def get_all_tags(
 )
 def create_tag(
     tag_data: TagCreate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> Tag:
 
     command = CreateTagCommand(
@@ -93,11 +80,7 @@ def create_tag(
 def update_tag(
     tag_id: UUID,
     tag_data: TagUpdate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> Tag:
 
     command = UpdateTagCommand(
@@ -111,11 +94,7 @@ def update_tag(
 )
 def delete_tag(
     tag_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> None:
 
     command = DeleteTagCommand(

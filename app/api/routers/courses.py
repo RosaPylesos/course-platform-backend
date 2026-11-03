@@ -8,7 +8,6 @@ from fastapi import (
     status, 
     Query,
 )
-from sqlalchemy.orm import Session
 
 from app.api.schemas.course_catalog import CourseCatalogParams
 from app.api.schemas.my_course import MyCoursesParams
@@ -20,9 +19,9 @@ from app.api.deps.courses import (
 )
 
 from app.api.dependencies import (
-    get_db, 
-    require_roles, 
-    get_current_user,
+    Db_Session,
+    Author_Or_Admin_User, 
+    Current_User,
 )
 from app.api.mappers.course_mapper import (
     to_course_list_response,
@@ -33,9 +32,6 @@ from app.api.mappers.course_mapper import (
 )
 
 from app.models.course import Course
-from app.models.user import User
-
-from app.models.enums import UserRole
 
 from app.application.courses.queries import (
     GetCoursesQuery,
@@ -109,7 +105,7 @@ def get_courses(
     status_code=status.HTTP_200_OK,
 )
 def get_course_catalog_filters(
-    db: Annotated[Session,Depends(get_db)],
+    db: Db_Session,
 ) -> CourseCatalogFiltersResponse:
 
     query = GetCourseCatalogFiltersQuery(
@@ -125,15 +121,7 @@ def get_course_catalog_filters(
     status_code=status.HTTP_200_OK,
 )
 def get_my_courses(
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        ),
-    ],
+    current_user: Author_Or_Admin_User,
     query: Annotated[
         GetMyCoursesQuery,
         Depends(get_my_courses_query),
@@ -159,15 +147,7 @@ def get_my_courses(
 )
 def get_my_course(
     course_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        )
-    ],
+    current_user: Author_Or_Admin_User,
     query: Annotated[
         GetMyCourseQuery,
         Depends(get_my_course_query),
@@ -187,7 +167,7 @@ def get_my_course(
 )
 def get_course(
     course_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> CourseListItemResponse:
     
     query = GetCourseQuery(
@@ -203,11 +183,8 @@ def get_course(
 )
 def get_course_progress(
     course_id: UUID,
-    current_user: Annotated[
-        User, 
-        Depends(get_current_user)
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> CourseProgressResponse:
 
     query = GetCourseProgressQuery(
@@ -225,14 +202,8 @@ def get_course_progress(
 )
 def create_course(
     course_data: CourseCreate,
-    current_user: Annotated[
-        User,
-        Depends(require_roles(
-            UserRole.AUTHOR, 
-            UserRole.ADMIN
-        )),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 
 ) -> Course:
     
@@ -252,16 +223,8 @@ def create_course(
 def update_course(
     course_id: UUID,
     course_data: CourseUpdate,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        )
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> Course:
     
     command = UpdateCourseCommand(
@@ -280,16 +243,8 @@ def update_course(
 )
 def publish_course(
     course_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        )
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> Course:
 
     command = PublishCourseCommand(
@@ -307,16 +262,8 @@ def publish_course(
 )
 def archive_course(
     course_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        ),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> Course:
 
     command = ArchiveCourseCommand(
@@ -330,15 +277,8 @@ def archive_course(
 @router.delete("/{course_id}", status_code=204)
 def delete_course(
     course_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-        )),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> None:
     
     command = DeleteCourseCommand(
@@ -356,15 +296,8 @@ def delete_course(
 def assign_tag_to_course(
     course_id: UUID,
     tag_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-        )),
-    ],
+    db: Db_Session,
+    current_user: Author_Or_Admin_User,
 ) -> None:
 
     command = AssignTagToCourseCommand(
@@ -383,15 +316,8 @@ def assign_tag_to_course(
 def unassign_tag_from_course(
     course_id: UUID,
     tag_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-        )),
-    ],
+    db: Db_Session,
+    current_user: Author_Or_Admin_User,
 ) -> None:
 
     command = UnassignTagFromCourseCommand(

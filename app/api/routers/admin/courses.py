@@ -2,7 +2,6 @@ from typing import Annotated
 from fastapi import APIRouter, status, Depends
 
 from app.api.schemas.manage_course import ManagedCourseListParams
-from app.api.dependencies import require_roles
 from app.api.deps.courses import (
     get_all_courses_query,
 )
@@ -14,9 +13,6 @@ from app.application.courses.queries import (
     GetAllCoursesInput,
     GetAllCoursesQuery,
 )
-
-from app.models.user import User
-from app.models.enums import UserRole
 
 from app.schemas.course import ManagedCourseListResponse
 
@@ -31,10 +27,6 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_all_courses(
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
     query: Annotated[
         GetAllCoursesQuery,
         Depends(get_all_courses_query),

@@ -1,9 +1,8 @@
 from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, status, Depends
-from sqlalchemy.orm import Session
 
-from app.api.dependencies import require_roles, get_db
+from app.api.dependencies import Db_Session
 from app.api.deps.topics import get_all_topics_query
 from app.api.schemas.topics import TopicListParams
 from app.api.mappers.topic_mapper import (
@@ -24,8 +23,6 @@ from app.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
 
-from app.models.user import User
-from app.models.enums import UserRole
 from app.models.topic import Topic
 
 from app.schemas.topic import (
@@ -46,12 +43,6 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_all_topics(
-    current_user: Annotated[
-        User,
-        Depends(require_roles(
-            UserRole.ADMIN,
-        )),
-    ],
     query: Annotated[
         GetAllTopicsQuery,
         Depends(get_all_topics_query),
@@ -76,11 +67,7 @@ def get_all_topics(
 )
 def create_topic(
     topic_data: TopicCreate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> Topic:
 
     command = CreateTopicCommand(
@@ -96,11 +83,7 @@ def create_topic(
 def update_topic(
     topic_id: UUID,
     topic_data: TopicUpdate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> Topic:
 
     command = UpdateTopicCommand(
@@ -117,11 +100,7 @@ def update_topic(
 )
 def delete_topic(
     topic_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> None:
     
     command = DeleteTopicCommand(

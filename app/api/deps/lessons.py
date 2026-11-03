@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from fastapi import Depends
 
-from app.api.dependencies import get_db
+from app.api.dependencies import Db_Session
 
 from app.application.lessons.queries import (
     GetAllLessonsQuery,
@@ -15,7 +15,7 @@ from app.infrastructure.lesson_repository import (
 )
 
 def get_all_lessons_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetAllLessonsQuery:
 
     return GetAllLessonsQuery(

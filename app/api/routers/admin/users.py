@@ -1,9 +1,8 @@
 from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, status, Depends
-from sqlalchemy.orm import Session
 
-from app.api.dependencies import require_roles, get_db
+from app.api.dependencies import Admin_User, Db_Session
 from app.api.deps.users import get_all_users_query
 from app.api.schemas.user_list import UserListParams
 
@@ -23,9 +22,6 @@ from app.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
 
-from app.models.user import User
-from app.models.enums import UserRole
-
 from app.schemas.user import UserListResponse
 
 router = APIRouter(
@@ -39,10 +35,6 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_all_users(
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
     query: Annotated[
         GetAllUsersQuery, 
         Depends(get_all_users_query),
@@ -63,11 +55,8 @@ def get_all_users(
 )
 def assign_author_role(
     user_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Admin_User,
+    db: Db_Session,
 ) -> None:
 
     command = AssignAuthorRoleCommand(

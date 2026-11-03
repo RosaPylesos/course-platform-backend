@@ -1,11 +1,12 @@
 from uuid import UUID
 
-from typing import Annotated
+from fastapi import APIRouter, status
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
-
-from app.api.dependencies import get_db, require_roles, get_current_user
+from app.api.dependencies import (
+    Db_Session, 
+    Author_Or_Admin_User, 
+    Current_User,
+)
 from app.api.mappers.lesson_mapper import (
     to_lesson_list_item_response,
 )
@@ -27,9 +28,6 @@ from app.application.events.setup import event_dispatcher
 from app.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 
 from app.models.lesson import Lesson
-from app.models.user import User
-from app.models.enums import UserRole
-
 
 from app.schemas.lesson import (
     LessonCreate, 
@@ -52,8 +50,8 @@ router = APIRouter (
 )
 def get_lessons(
     course_id: UUID,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> list[LessonListItemResponse]:
     
     lessons = GetLessonsQuery(
@@ -76,8 +74,8 @@ def get_lessons(
 def get_lesson(
     course_id: UUID,
     lesson_id: UUID,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> Lesson:
     
     query = GetLessonQuery(SqlAlchemyUnitOfWork(db))
@@ -95,11 +93,8 @@ def get_lesson(
 def start_lesson(
     course_id: UUID,
     lesson_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(get_current_user),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> LessonProgressResponse:
 
     command = StartLessonCommand(
@@ -119,11 +114,8 @@ def start_lesson(
 def complete_lesson(
     course_id: UUID,
     lesson_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(get_current_user),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> LessonProgressResponse:
 
     command = CompleteLessonCommand(
@@ -144,16 +136,8 @@ def complete_lesson(
 def create_lesson(
     course_id: UUID,
     lesson_data: LessonCreate,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        ),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> Lesson:
 
     command = CreateLessonCommand(
@@ -172,16 +156,8 @@ def create_lesson(
 def reorder_lessons(
     course_id: UUID,
     reorder_data: LessonReorder,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        ),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> None:
     command = ReorderLessonsCommand(
         SqlAlchemyUnitOfWork(db)
@@ -201,16 +177,8 @@ def update_lesson(
     course_id: UUID,
     lesson_id: UUID,
     lesson_data: LessonUpdate,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        ),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> Lesson:
     
     command = UpdateLessonCommand(
@@ -230,16 +198,8 @@ def update_lesson(
 def delete_lesson(
     course_id: UUID,
     lesson_id: UUID,
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(
-                UserRole.AUTHOR,
-                UserRole.ADMIN,
-            )
-        ),
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Author_Or_Admin_User,
+    db: Db_Session,
 ) -> None:
 
     command = DeleteLessonCommand(

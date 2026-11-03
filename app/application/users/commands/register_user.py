@@ -34,9 +34,8 @@ class RegisterUserCommand:
             password_hash = hash_password(user_data.password),
         )
 
-        self.uow.users.add(user)
-
         try:
+            self.uow.users.add(user)
             self.uow.commit()
         except IntegrityError as exc:
             self.uow.rollback()

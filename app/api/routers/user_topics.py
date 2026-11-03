@@ -2,9 +2,8 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db, get_current_user
+from app.api.dependencies import Db_Session, Current_User
 
 from app.application.user_topics.queries import (
     GetUserTopicsQuery,
@@ -40,11 +39,8 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_user_topics(
-    current_user: Annotated[
-        User, 
-        Depends(get_current_user)
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> list[Topic]:
 
     query = GetUserTopicsQuery(
@@ -58,11 +54,8 @@ def get_user_topics(
 )
 def add_user_topic(
     topic_data: UserTopicCreate,
-    current_user: Annotated[
-        User, 
-        Depends(get_current_user)
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> None:
 
     command = AddUserTopicCommand(
@@ -79,11 +72,8 @@ def add_user_topic(
 )
 def remove_user_topic(
     topic_id: UUID,
-    current_user: Annotated[
-        User, 
-        Depends(get_current_user)
-    ],
-    db: Annotated[Session, Depends(get_db)],
+    current_user: Current_User,
+    db: Db_Session,
 ) -> None:
 
     command = RemoveUserTopicCommand(

@@ -1,10 +1,4 @@
-from typing import Annotated
-
-from sqlalchemy.orm import Session
-
-from fastapi import Depends
-
-from app.api.dependencies import get_db
+from app.api.dependencies import Db_Session
 
 from app.application.users.queries import (
     GetMyProfileQuery,
@@ -16,7 +10,7 @@ from app.infrastructure.user_repository import (
 )
 
 def get_my_profile_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetMyProfileQuery:
 
     return GetMyProfileQuery(
@@ -24,7 +18,7 @@ def get_my_profile_query(
     )
 
 def get_all_users_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetAllUsersQuery:
 
     return GetAllUsersQuery(

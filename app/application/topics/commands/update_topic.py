@@ -55,7 +55,7 @@ class UpdateTopicCommand:
                             "A topic cannot have one of its descendants as its parent"
                         )
 
-                    if ancestor.parent.id is None:
+                    if ancestor.parent_id is None:
                         break
 
                     ancestor = self.uow.topics.get_by_id(ancestor.parent_id)

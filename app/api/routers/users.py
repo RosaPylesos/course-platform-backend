@@ -1,18 +1,14 @@
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from fastapi.security import OAuth2PasswordRequestForm
-
-from sqlalchemy.orm import Session
 
 from app.api.mappers.user_mapper import (
     to_user_profile_response,
 )
 from app.api.dependencies import (
-    get_db, 
-    get_current_user,
-    require_roles,
+    Current_User, 
+    Db_Session,
+    OAuth2_Form,
 )
 from app.api.deps.users import (
     get_my_profile_query,
@@ -24,7 +20,6 @@ from app.application.users.queries import (
 )
 from app.application.users.commands import (
     RegisterUserCommand,
-    AssignAuthorRoleCommand,
 )
 
 from app.infrastructure.user_repository import(
@@ -35,7 +30,6 @@ from app.infrastructure.unit_of_work import (
 )
 
 from app.models.user import User
-from app.models.enums import UserRole
 
 from app.schemas.user import (
     UserRegister, 
@@ -57,7 +51,7 @@ router = APIRouter(
 )
 def register_user(
     user_data: UserRegister,
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> User:
     
     command = RegisterUserCommand(
@@ -72,7 +66,7 @@ def register_user(
 )
 def login_user(
     user_data: UserLogin,
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> TokenResponse:
     
     query = AuthenticateUserQuery(
@@ -90,8 +84,8 @@ def login_user(
     status_code=status.HTTP_200_OK,
 )
 def login_for_swagger(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: Annotated[Session, Depends(get_db)],
+    form_data: OAuth2_Form,
+    db: Db_Session,
 ) -> TokenResponse:
     
     query = AuthenticateUserQuery(
@@ -109,7 +103,7 @@ def login_for_swagger(
     status_code=status.HTTP_200_OK,
 )
 def get_me(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Current_User,
     query: Annotated[
         GetMyProfileQuery, Depends(get_my_profile_query)
     ],

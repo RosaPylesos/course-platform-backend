@@ -1,9 +1,4 @@
-from typing import Annotated
-
-from fastapi import Depends
-from sqlalchemy.orm import Session
-
-from app.api.dependencies import get_db
+from app.api.dependencies import Db_Session
 from app.application.courses.queries import (
     GetCoursesQuery,
 )
@@ -18,7 +13,7 @@ from app.infrastructure.tag_repository import SqlAlchemyTagRepository
 
 
 def get_course_catalog_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetCoursesQuery:
     
     return GetCoursesQuery(

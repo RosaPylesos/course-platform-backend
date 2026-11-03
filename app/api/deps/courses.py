@@ -1,10 +1,4 @@
-from typing import Annotated
-
-from sqlalchemy.orm import Session
-
-from fastapi import Depends
-
-from app.api.dependencies import get_db
+from app.api.dependencies import Db_Session
 
 from app.application.courses.queries import (
     GetMyCourseQuery,
@@ -27,7 +21,7 @@ from app.infrastructure.tag_repository import (
 )
 
 def get_my_course_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetMyCourseQuery:
 
     return GetMyCourseQuery(
@@ -35,7 +29,7 @@ def get_my_course_query(
     )
 
 def get_my_courses_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetMyCoursesQuery:
 
     return GetMyCoursesQuery(
@@ -43,7 +37,7 @@ def get_my_courses_query(
     )
 
 def get_course_catalog_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetCoursesQuery:
     
     return GetCoursesQuery(
@@ -55,7 +49,7 @@ def get_course_catalog_query(
     )
 
 def get_all_courses_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetAllCoursesQuery:
 
     return GetAllCoursesQuery(

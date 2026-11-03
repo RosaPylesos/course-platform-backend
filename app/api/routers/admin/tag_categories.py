@@ -1,9 +1,8 @@
 from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, status, Depends
-from sqlalchemy.orm import Session
 
-from app.api.dependencies import require_roles, get_db
+from app.api.dependencies import Db_Session
 from app.api.deps.tags import get_all_tag_categories_query
 from app.api.schemas.tags import TagCategoryListParams
 from app.api.mappers.tag_mapper import (
@@ -24,8 +23,6 @@ from app.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
 
-from app.models.user import User
-from app.models.enums import UserRole
 from app.models.tag_category import TagCategory
 
 from app.schemas.tag_category import (
@@ -46,12 +43,6 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_tag_categories(
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(UserRole.ADMIN)
-        ),
-    ],
     params: Annotated[TagCategoryListParams, Depends()],
     query: Annotated[
         GetAllTagCategoriesQuery,
@@ -72,11 +63,7 @@ def get_tag_categories(
 )
 def create_tag_category(
     category_data: TagCategoryCreate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN))
-    ],
+    db: Db_Session,
 ) -> TagCategory:
 
     command = CreateTagCategoryCommand(
@@ -92,11 +79,7 @@ def create_tag_category(
 def update_tag_category(
     category_id: UUID,
     category_data: TagCategoryUpdate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> TagCategory:
 
     command = UpdateTagCategoryCommand(
@@ -113,11 +96,7 @@ def update_tag_category(
 )
 def delete_tag_category(
     category_id: UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[
-        User,
-        Depends(require_roles(UserRole.ADMIN)),
-    ],
+    db: Db_Session,
 ) -> None:
 
     command = DeleteTagCategoryCommand(

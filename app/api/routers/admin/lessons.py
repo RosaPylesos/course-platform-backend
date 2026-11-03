@@ -1,7 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, status, Depends
 
-from app.api.dependencies import require_roles
 from app.api.deps.lessons import get_all_lessons_query
 from app.api.schemas.lesson_list import ManagedLessonListParams
 from app.api.mappers.lesson_mapper import (
@@ -12,9 +11,6 @@ from app.application.lessons.queries import (
     GetAllLessonsQuery,
     GetAllLessonsInput,
 )
-
-from app.models.user import User
-from app.models.enums import UserRole
 
 from app.schemas.lesson import ManagedLessonListResponse
 
@@ -29,12 +25,6 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_all_lessons(
-    current_user: Annotated[
-        User,
-        Depends(
-            require_roles(UserRole.ADMIN)
-        ),
-    ],
     query: Annotated[
         GetAllLessonsQuery,
         Depends(get_all_lessons_query),

@@ -5,7 +5,10 @@ from collections.abc import Generator
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import (
+    OAuth2PasswordBearer, 
+    OAuth2PasswordRequestForm,
+)
 
 from jwt.exceptions import InvalidTokenError
 
@@ -27,6 +30,8 @@ optional_oauth2_scheme = OAuth2PasswordBearer(
     auto_error=False,
 )
 
+OAuth2_Form = Annotated[OAuth2PasswordRequestForm, Depends()]
+
 # DB Dependency
 
 def get_db() -> Generator[Session, None, None]:
@@ -37,11 +42,13 @@ def get_db() -> Generator[Session, None, None]:
     finally:
         db.close()
 
+Db_Session = Annotated[Session, Depends(get_db)]
+
 # Get user for further actions with API
 
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,11 +80,13 @@ def get_current_user(
 
     return user
 
+Current_User = Annotated[User, Depends(get_current_user)]
+
 # Get optional user for further actions with API
 
 def get_optional_current_user(
     token: Annotated[str, Depends(optional_oauth2_scheme)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> User | None:
 
     if token is None:
@@ -103,6 +112,11 @@ def get_optional_current_user(
     
     return user
 
+Optional_Current_User = Annotated[
+    User | None, 
+    Depends(get_optional_current_user),
+]
+
 # User's Role check
 
 def require_roles(*allowed_roles: UserRole):
@@ -118,3 +132,16 @@ def require_roles(*allowed_roles: UserRole):
         return current_user
 
     return role_checker
+
+Author_Or_Admin_User = Annotated[
+    User,
+    Depends(require_roles(
+        UserRole.AUTHOR,
+        UserRole.ADMIN,
+    )),
+]
+
+Admin_User = Annotated[
+    User,
+    Depends(require_roles(UserRole.ADMIN)),
+]

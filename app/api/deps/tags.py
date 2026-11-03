@@ -1,10 +1,4 @@
-from typing import Annotated
-
-from sqlalchemy.orm import Session
-
-from fastapi import Depends
-
-from app.api.dependencies import get_db
+from app.api.dependencies import Db_Session
 
 from app.application.tags.queries import (
     GetAllTagsQuery,
@@ -21,7 +15,7 @@ from app.infrastructure.tag_repository import (
 )
 
 def get_all_tag_categories_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetAllTagCategoriesQuery:
 
     return GetAllTagCategoriesQuery(
@@ -29,7 +23,7 @@ def get_all_tag_categories_query(
     )
 
 def get_all_tags_query(
-    db: Annotated[Session, Depends(get_db)],
+    db: Db_Session,
 ) -> GetAllTagsQuery:
 
     return GetAllTagsQuery(

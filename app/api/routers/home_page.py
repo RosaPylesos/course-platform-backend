@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, APIRouter, status
 
-from app.api.dependencies import get_optional_current_user
+from app.api.dependencies import Optional_Current_User
 from app.api.deps.home_page import get_home_page_query
 from app.api.mappers.course_mapper import (
     to_home_page_response,
@@ -31,10 +31,7 @@ def get_home_page(
         GetHomePageQuery, 
         Depends(get_home_page_query)
     ],
-    current_user: Annotated[
-        User | None, 
-        Depends(get_optional_current_user)
-    ],
+    current_user: Optional_Current_User,
 ) -> HomePageResponse:
 
     sections = query.execute(
