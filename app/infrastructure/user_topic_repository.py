@@ -23,7 +23,7 @@ class SqlAlchemyUserTopicRepository(UserTopicRepository):
             select(Topic)
             .join(UserTopic, UserTopic.topic_id == Topic.id)
             .where(UserTopic.user_id == user_id)
-            .order_by(Topic.name)
+            .order_by(Topic.name, Topic.id)
         )
         return list(self.db.scalars(statement).all())
 

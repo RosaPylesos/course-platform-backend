@@ -76,7 +76,7 @@ class SqlAlchemyTagCategoryRepository(TagCategoryRepository):
             total=total,
             page=page,
             page_size=page_size,
-            total_pages=(total * page_size - 1) // page_size
+            total_pages=(total + page_size - 1) // page_size
         )
 
     def get_by_id(
@@ -115,15 +115,15 @@ class SqlAlchemyTagCategoryRepository(TagCategoryRepository):
     def slug_exists(
         self,
         slug: str,
-        exclude_category_id: UUID | None = None,
+        exclude_id: UUID | None = None,
     ) -> bool:
 
         statement = select(TagCategory.id).where(
             TagCategory.slug == slug
         )
 
-        if exclude_category_id is not None:
+        if exclude_id is not None:
             statement = statement.where(
-                TagCategory.id != exclude_category_id
+                TagCategory.id != exclude_id
             )
         return self.db.scalar(statement) is not None

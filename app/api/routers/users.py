@@ -12,6 +12,7 @@ from app.api.dependencies import (
 )
 from app.api.deps.users import (
     get_my_profile_query,
+    Update_My_Profile_Command,
 )
 
 from app.application.users.queries import (
@@ -36,6 +37,7 @@ from app.schemas.user import (
     UserResponse,
     UserProfileResponse,
     UserLogin,
+    UserUpdate,
     TokenResponse,
 )
 
@@ -111,3 +113,19 @@ def get_me(
 
     user = query.execute(current_user.id)
     return to_user_profile_response(user)
+
+@router.patch(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+)
+def update_my_profile(
+    user_data: UserUpdate,
+    current_user: Current_User,
+    command: Update_My_Profile_Command,
+) -> User:
+
+    return command.execute(
+        user_id=current_user.id,
+        user_data=user_data,
+    )

@@ -39,6 +39,9 @@ class UpdateCourseCommand:
 
         update_data = course_data.model_dump(exclude_unset=True)
 
+        if not update_data:
+            raise InvalidInputError("No fields to update")
+
         for field in ("topic_id", "name", "difficulty"):
             if (
                 field in update_data 

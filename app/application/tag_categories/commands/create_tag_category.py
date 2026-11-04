@@ -4,7 +4,7 @@ from app.models.tag_category import TagCategory
 
 from app.schemas.tag_category import TagCategoryCreate
 
-from app.utils.slug import generate_slug
+from app.utils.slug import generate_unique_slug
 
 
 
@@ -17,13 +17,10 @@ class CreateTagCategoryCommand:
         category_data: TagCategoryCreate,
     ) -> TagCategory:
 
-        slug = generate_slug(category_data.name)
-        base_slug = slug
-        counter = 2
-
-        while self.uow.tag_categories.slug_exists(slug):
-            slug = f"{base_slug}-{counter}"
-            counter += 1
+        slug = generate_unique_slug(
+            category_data.name,
+            self.uow.tag_categories.slug_exists,
+        )
 
         category = TagCategory(
             name = category_data.name,

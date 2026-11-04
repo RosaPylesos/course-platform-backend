@@ -20,19 +20,6 @@ class SqlAlchemyEnrollmentRepository(EnrollmentRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_by_user(
-        self, 
-        user_id: UUID
-    ) -> list[Enrollment]:
-
-        statement = select(Enrollment).where(
-            Enrollment.user_id == user_id
-        )
-
-        return list(
-            self.db.scalars(statement).all()
-        )
-
     def list_by_user_with_progress(
         self,
         user_id: UUID,

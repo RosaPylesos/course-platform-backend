@@ -10,7 +10,7 @@ from app.models.topic import Topic
 
 from app.schemas.topic import TopicUpdate
 
-from app.utils.slug import generate_slug
+from app.utils.slug import generate_unique_slug
 
 
 
@@ -30,6 +30,9 @@ class UpdateTopicCommand:
             raise ResourceNotFoundError("Topic not found")
 
         update_data = topic_data.model_dump(exclude_unset=True)
+
+        if not update_data:
+            raise InvalidInputError("No fields to update")
 
         if "parent_id" in update_data:
             parent_id = update_data["parent_id"]
@@ -66,16 +69,11 @@ class UpdateTopicCommand:
             if new_name is None:
                 raise InvalidInputError("Topic name cannot be null")
 
-            slug = generate_slug(new_name)
-            base_slug = slug
-            counter = 2
-
-            while self.uow.topics.slug_exists(
-                slug,
-                exclude_topic_id=topic_id
-            ):
-                slug = f"{base_slug}-{counter}"
-                counter += 1
+            slug = generate_unique_slug(
+                new_name,
+                self.uow.topics.slug_exists,
+                exclude_id=topic_id,
+            )
 
             topic.name = new_name
             topic.slug = slug

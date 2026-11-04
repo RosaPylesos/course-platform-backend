@@ -5,7 +5,7 @@ from app.models.tag import Tag
 
 from app.schemas.tag import TagCreate
 
-from app.utils.slug import generate_slug
+from app.utils.slug import generate_unique_slug
 
 
 
@@ -27,13 +27,10 @@ class CreateTagCommand:
                 "Tag category not found"
             )
 
-        slug = generate_slug(tag_data.name)
-        base_slug = slug
-        counter = 2
-
-        while self.uow.tags.slug_exists(slug):
-            slug = f"{base_slug}-{counter}"
-            counter += 1
+        slug = generate_unique_slug(
+            tag_data.name,
+            self.uow.tags.slug_exists,
+        )
 
         tag = Tag(
             tag_category_id=category.id,

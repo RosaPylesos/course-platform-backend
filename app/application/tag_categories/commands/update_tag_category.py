@@ -10,7 +10,7 @@ from app.models.tag_category import TagCategory
 
 from app.schemas.tag_category import TagCategoryUpdate
 
-from app.utils.slug import generate_slug
+from app.utils.slug import generate_unique_slug
 
 
 
@@ -31,22 +31,20 @@ class UpdateTagCategoryCommand:
 
         update_data = category_data.model_dump(exclude_unset=True)
 
+        if not update_data:
+            raise InvalidInputError("No fields to update")
+
         if "name" in update_data:
             new_name = update_data.pop("name")
 
             if new_name is None:
                 raise InvalidInputError("Tag category name cannot be null")
 
-            slug = generate_slug(new_name)
-            base_slug = slug
-            counter = 2
-
-            while self.uow.tag_categories.slug_exists(
-                slug,
-                exclude_category_id=category_id,
-            ):
-                slug = f"{base_slug}-{counter}"
-                counter += 1
+            slug = generate_unique_slug(
+                new_name,
+                self.uow.tag_categories.slug_exists,
+                exclude_id=category_id,
+            )
 
             category.name = new_name
             category.slug = slug

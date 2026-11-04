@@ -52,6 +52,9 @@ class UpdateLessonCommand:
             mode="json"
         )
 
+        if not update_data:
+            raise InvalidInputError("No fields to update")
+
         if (
             "name" in update_data 
             and update_data["name"] is None

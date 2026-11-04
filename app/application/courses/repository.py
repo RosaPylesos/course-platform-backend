@@ -30,9 +30,6 @@ class CourseRepository(Protocol):
     ) -> AllCoursesView:
         ...
 
-    def list_published(self) -> list[Course]:
-        ...
-
     def get_home_page_sections(
         self,
         preferred_topic_ids: list[UUID] | None = None,

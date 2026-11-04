@@ -78,13 +78,6 @@ class SqlAlchemyCourseRepository(CourseRepository):
             total_pages=(total + page_size - 1) // page_size,
         )
 
-    def list_published(self) -> list[Course]:
-
-        statement = select(Course).where(
-            Course.status == CourseStatus.PUBLISHED
-        )
-        return list(self.db.scalars(statement).all())
-
     def get_home_page_sections(
         self,
         preferred_topic_ids: list[UUID] | None = None,
@@ -128,16 +121,21 @@ class SqlAlchemyCourseRepository(CourseRepository):
             preferred_topics = self.db.execute(
                 topic_statement
                 .where(Topic.id.in_(preferred_ids))
+                .limit(limit_topics)
             ).all()
 
-        popular_topics = self.db.execute(
-            topic_statement
-            .where(
-                Topic.id.not_in(preferred_ids)
-                if preferred_ids else True
-            )
-            .limit(limit_topics)
-        ).all()
+        remaining = limit_topics - len(preferred_topics)
+
+        popular_topics = []
+        if remaining > 0:
+            popular_topics = self.db.execute(
+                topic_statement
+                .where(
+                    Topic.id.not_in(preferred_ids)
+                    if preferred_ids else True
+                )
+                .limit(remaining)
+            ).all()
 
         selected_topics = preferred_topics + popular_topics
 
@@ -386,47 +384,29 @@ class SqlAlchemyCourseRepository(CourseRepository):
         )
 
         ### TOPICS FILTER
-        used_topics_statement = (
-            select(Course.topic_id)
-            .where(
-                published_filter,
-                Course.topic_id.is_not(None),
-            )
+        topic_tree = (
+            select(Course.topic_id.label("id"))
+            .where(published_filter)
             .distinct()
+            .cte("topic_tree", recursive=True)
         )
 
-        used_topics_ids = set(
-            self.db.scalars(used_topics_statement).all()
+        topic_tree = topic_tree.union(
+            select(Topic.parent_id.label("id"))
+            .join(
+                topic_tree,
+                Topic.id == topic_tree.c.id,
+            )
+            .where(Topic.parent_id.is_not(None))
         )
-
-        ## TOPICS PARENTS
-        topic_ids = set(used_topics_ids)
-
-        while used_topics_ids:
-            parent_ids_statement = select(Topic.parent_id).where(
-                Topic.id.in_(used_topics_ids),
-                Topic.parent_id.is_not(None),
-            )
-
-            parent_ids = set(
-                self.db.scalars(parent_ids_statement).all()
-            )
-
-            new_parent_ids = parent_ids - topic_ids
-
-            if not new_parent_ids:
-                break
-
-            topic_ids.update(new_parent_ids)
-            used_topics_ids = new_parent_ids
 
         topics_statement = (
             select(Topic)
-            .where(Topic.id.in_(topic_ids))
-            .order_by(Topic.name)
+            .where(Topic.id.in_(select(topic_tree.c.id)))
+            .order_by(Topic.name, Topic.id)
         )
 
-        topics = [
+        topics =[
             CatalogFilterTopicView(
                 id=topic.id,
                 name=topic.name,
@@ -498,11 +478,13 @@ class SqlAlchemyCourseRepository(CourseRepository):
         status: CourseStatus | None = None,
     ) -> MyCoursesView:
 
+        base_filters = [Course.author_id == author_id]
+
         offset = (page - 1) * page_size
 
         statement = (
             select(Course)
-            .where(Course.author_id == author_id)
+            .where(*base_filters)
             .options(
                 selectinload(Course.topic),
                 selectinload(Course.course_tags).selectinload(
@@ -527,20 +509,20 @@ class SqlAlchemyCourseRepository(CourseRepository):
         ### Count total course amount (incl. filters)
         total_statement = (
             select(func.count(Course.id))
-            .where(Course.author_id == author_id)
-        )
-
-        if status is not None:
-            total_statement = total_statement.where(
-                Course.status == status
+            .where(
+                *base_filters,
+                *(
+                    [Course.status == status] if status is not None else []
+                ),
             )
+        )
 
         total = self.db.scalar(total_statement) or 0
 
         ### Count course amount per status
         counts_statement = (
             select(Course.status, func.count(Course.id))
-            .where(Course.author_id == author_id)
+            .where(*base_filters)
             .group_by(Course.status)
         )
 

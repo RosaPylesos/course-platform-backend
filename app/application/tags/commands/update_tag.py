@@ -10,7 +10,7 @@ from app.models.tag import Tag
 
 from app.schemas.tag import TagUpdate
 
-from app.utils.slug import generate_slug
+from app.utils.slug import generate_unique_slug
 
 
 
@@ -31,22 +31,20 @@ class UpdateTagCommand:
 
         update_data = tag_data.model_dump(exclude_unset=True)
 
+        if not update_data:
+            raise InvalidInputError("No fields to update")
+
         if "name" in update_data:
             new_name = update_data.pop("name")
 
             if new_name is None:
                 raise InvalidInputError("Tag name cannot be null")
 
-            slug = generate_slug(new_name)
-            base_slug = slug
-            counter = 2
-
-            while self.uow.tags.slug_exists(
-                slug,
-                exclude_tag_id=tag_id,
-            ):
-                slug = f"{base_slug}-{counter}"
-                counter += 1
+            slug = generate_unique_slug(
+                new_name,
+                self.uow.tags.slug_exists,
+                exclude_id=tag_id,
+            )
 
             tag.name = new_name
             tag.slug = slug

@@ -9,12 +9,6 @@ from app.application.enrollments.views import MyEnrollmentItem
 
 class EnrollmentRepository(Protocol):
 
-    def list_by_user(
-        self, 
-        user_id: UUID
-    ) -> list[Enrollment]:
-        ...
-
     def list_by_user_with_progress(
         self,
         user_id: UUID

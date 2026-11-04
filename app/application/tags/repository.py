@@ -9,13 +9,6 @@ from app.models.tag import Tag
 
 class TagRepository(Protocol):
 
-    def list(
-        self,
-        page: int,
-        page_size: int,
-        tag_category_id: UUID | None = None,
-    ) -> TagListView: ...
-
     def list_all(
         self,
         page: int,

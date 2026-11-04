@@ -15,46 +15,6 @@ class SqlAlchemyTagRepository(TagRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list(
-        self,
-        page: int,
-        page_size: int,
-        tag_category_id: UUID | None = None,
-    ) -> TagListView:
-
-        offset = (page - 1) * page_size
-
-        statement = select(Tag)
-
-        total_statement = select(func.count(Tag.id))
-
-        if tag_category_id is not None:
-            statement = statement.where(
-                Tag.tag_category_id == tag_category_id
-            )
-
-            total_statement = total_statement.where(
-                Tag.tag_category_id == tag_category_id
-            )
-
-        statement = (
-            statement
-            .order_by(Tag.name, Tag.id)
-            .offset(offset)
-            .limit(page_size)
-        )
-
-        items = list(self.db.scalars(statement).all())
-        total = self.db.scalar(total_statement) or 0
-
-        return TagListView(
-            items=items,
-            total=total,
-            page=page,
-            page_size=page_size,
-            total_pages=(total + page_size - 1) // page_size
-        )
-
     def list_all(
         self,
         page: int,
@@ -131,13 +91,13 @@ class SqlAlchemyTagRepository(TagRepository):
     def slug_exists(
         self,
         slug: str,
-        exclude_tag_id: UUID | None = None,
+        exclude_id: UUID | None = None,
     ) -> bool:
 
         statement = select(Tag.id).where(Tag.slug == slug)
 
-        if exclude_tag_id is not None:
-            statement = statement.where(Tag.id != exclude_tag_id)
+        if exclude_id is not None:
+            statement = statement.where(Tag.id != exclude_id)
 
         return self.db.scalar(statement) is not None
 

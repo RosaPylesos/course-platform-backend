@@ -16,8 +16,13 @@ from sqlalchemy.orm import Session
 
 from app.database.connection import SessionLocal, settings
 
+from app.application.unit_of_work import UnitOfWork
+
 from app.infrastructure.user_repository import (
     SqlAlchemyUserRepository
+)
+from app.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork,
 )
 
 from app.models.user import User
@@ -43,6 +48,18 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 Db_Session = Annotated[Session, Depends(get_db)]
+
+# UoW Dependency
+
+def get_uow(
+    db: Db_Session,
+) -> UnitOfWork:
+    return SqlAlchemyUnitOfWork(db)
+
+Unit_Of_Work_Dependency = Annotated[
+    UnitOfWork,
+    Depends(get_uow),
+]
 
 # Get user for further actions with API
 

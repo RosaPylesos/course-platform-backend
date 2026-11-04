@@ -1,2 +1,3 @@
 from app.application.users.commands.register_user import RegisterUserCommand
 from app.application.users.commands.assign_author_role import AssignAuthorRoleCommand
+from app.application.users.commands.update_my_profile import UpdateMyProfileCommand

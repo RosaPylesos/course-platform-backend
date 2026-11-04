@@ -105,13 +105,13 @@ class SqlAlchemyTopicRepository(TopicRepository):
     def slug_exists(
         self,
         slug: str,
-        exclude_topic_id: UUID | None = None,
+        exclude_id: UUID | None = None,
     ) -> bool:
 
         statement = select(Topic.id).where(Topic.slug == slug)
 
-        if exclude_topic_id is not None:
-            statement = statement.where(Topic.id != exclude_topic_id)
+        if exclude_id is not None:
+            statement = statement.where(Topic.id != exclude_id)
 
         return self.db.scalar(statement) is not None
 
