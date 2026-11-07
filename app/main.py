@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 #ROUTERS
@@ -34,6 +35,17 @@ from app.application.exceptions import (
 from app.database.connection import test_connection
 
 app = FastAPI(title="Course Platform API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 logging.basicConfig(level=logging.INFO)
 
