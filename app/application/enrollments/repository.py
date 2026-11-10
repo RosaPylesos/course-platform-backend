@@ -3,7 +3,10 @@ from uuid import UUID
 
 from app.models.enrollment import Enrollment
 
-from app.application.enrollments.views import MyEnrollmentItem
+from app.application.enrollments.views import (
+    MyEnrollmentItem,
+    MyEnrollmentStatusView,
+)
 
 
 

@@ -2,3 +2,4 @@ from app.application.enrollments.views.my_enrollments_view import MyEnrollmentsV
 from app.application.enrollments.views.my_enrollments_view import MyEnrollmentItem
 from app.application.enrollments.views.my_enrollments_view import EnrollmentProgressSummary
 from app.application.enrollments.views.my_enrollments_view import EnrollmentStatusGroup
+from app.application.enrollments.views.my_enrollment_status_view import MyEnrollmentStatusView

@@ -1,19 +1,17 @@
 from uuid import UUID
 
-from typing import Annotated
+from fastapi import APIRouter, status
 
-from fastapi import APIRouter, Depends, status
-
-from app.api.dependencies import get_current_user, Db_Session
+from app.api.dependencies import Current_User, Db_Session
 from app.api.mappers.enrollment_mapper import (
     to_my_enrollments_response,
 )
 
 from app.models.enrollment import Enrollment
-from app.models.user import User
 
 from app.application.enrollments.queries import (
     GetMyEnrollmentsQuery,
+    GetMyEnrollmentStatusQuery,
 )
 from app.application.enrollments.commands import(
     CreateEnrollmentCommand,
@@ -30,6 +28,7 @@ from app.schemas.enrollment import (
     EnrollmentCreate, 
     EnrollmentResponse,
     MyEnrollmentsResponse,
+    EnrollmentStatusResponse,
 )
 
 router = APIRouter(
@@ -44,7 +43,7 @@ router = APIRouter(
 )
 def get_my_enrollments(
     db: Db_Session,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Current_User,
 ) -> MyEnrollmentsResponse:
 
     view = GetMyEnrollmentsQuery(
@@ -60,7 +59,7 @@ def get_my_enrollments(
 def create_enrollment(
     enrollment_data: EnrollmentCreate,
     db: Db_Session,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Current_User,
 ) -> Enrollment:
 
     command = CreateEnrollmentCommand(
@@ -80,7 +79,7 @@ def create_enrollment(
 def cancel_enrollment(
     enrollment_id: UUID,
     db: Db_Session,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Current_User,
 ) -> Enrollment:
 
     command = CancelEnrollmentCommand(
@@ -100,7 +99,7 @@ def cancel_enrollment(
 def restore_enrollment(
     enrollment_id: UUID,
     db: Db_Session,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Current_User,
 ) -> Enrollment:
     
     command = RestoreEnrollmentCommand(
@@ -109,5 +108,24 @@ def restore_enrollment(
 
     return command.execute(
         enrollment_id=enrollment_id,
+        user_id=current_user.id,
+    )
+
+@router.get(
+    "/status/{course_id}",
+    response_model=EnrollmentStatusResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_my_enrollment_status(
+    course_id: UUID,
+    db: Db_Session,
+    current_user: Current_User,
+) -> EnrollmentStatusResponse:
+
+    query = GetMyEnrollmentStatusQuery(
+        SqlAlchemyEnrollmentRepository(db),
+    )
+    return query.execute(
+        course_id=course_id,
         user_id=current_user.id,
     )

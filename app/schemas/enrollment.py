@@ -18,6 +18,13 @@ class EnrollmentResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class EnrollmentStatusResponse(BaseModel):
+    id: UUID
+    course_id: UUID
+    status: EnrollmentStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
 class EnrollmentCourseSummaryResponse(BaseModel):
     id: UUID
     name: str

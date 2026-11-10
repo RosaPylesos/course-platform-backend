@@ -204,7 +204,6 @@ def create_course(
     course_data: CourseCreate,
     current_user: Author_Or_Admin_User,
     db: Db_Session,
-
 ) -> Course:
     
     command = CreateCourseCommand(

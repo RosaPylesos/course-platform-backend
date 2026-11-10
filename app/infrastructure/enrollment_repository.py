@@ -7,12 +7,12 @@ from app.application.enrollments.repository import EnrollmentRepository
 from app.application.enrollments.views import (
     MyEnrollmentItem,
     EnrollmentProgressSummary,
+    MyEnrollmentStatusView,
 )
 from app.models.enrollment import Enrollment
 from app.models.course import Course
 from app.models.lesson import Lesson
 from app.models.lesson_progress import LessonProgress
-
 
 
 
