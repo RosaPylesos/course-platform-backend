@@ -27,6 +27,16 @@ class SqlAlchemyUserTopicRepository(UserTopicRepository):
         )
         return list(self.db.scalars(statement).all())
 
+    def list_user_topics(
+        self,
+        user_id: UUID,
+    ) -> list[UserTopic]:
+
+        statement = select(UserTopic).where(
+            UserTopic.user_id == user_id
+        )
+        return list(self.db.scalars(statement).all())
+
     def get_by_user_and_topic(
         self,
         user_id: UUID,

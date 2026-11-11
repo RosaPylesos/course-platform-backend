@@ -6,6 +6,9 @@ from pydantic import BaseModel, ConfigDict, Field
 class UserTopicCreate(BaseModel):
     topic_id: UUID
 
+class UserTopicsUpdate(BaseModel):
+    topic_ids: list[UUID]
+
 class UserInterestResponse(BaseModel):
     id: UUID
     name: str

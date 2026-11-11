@@ -68,6 +68,7 @@ class GetCourseProgressQuery:
                 lesson_id=lesson.id,
                 lesson_name=lesson.name,
                 position=lesson.position,
+                description=lesson.description,
                 is_started=lesson.id in progress_by_lesson_id,
                 is_completed=(
                     progress_by_lesson_id[lesson.id].is_completed

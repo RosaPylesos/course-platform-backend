@@ -1,7 +1,6 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, status
 
 from app.api.dependencies import Db_Session, Current_User
 
@@ -11,6 +10,7 @@ from app.application.user_topics.queries import (
 from app.application.user_topics.commands import (
     AddUserTopicCommand,
     RemoveUserTopicCommand,
+    UpdateUserTopicsCommand,
 )
 
 from app.infrastructure.user_topic_repository import (
@@ -21,11 +21,11 @@ from app.infrastructure.unit_of_work import (
 )
 
 from app.models.topic import Topic
-from app.models.user import User
 
 from app.schemas.user_topic import (
     UserTopicCreate,
     UserInterestResponse,
+    UserTopicsUpdate,
 )
 
 router = APIRouter(
@@ -64,6 +64,24 @@ def add_user_topic(
     command.execute(
         user_id=current_user.id,
         topic_id=topic_data.topic_id,
+    )
+
+@router.put(
+    "/",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def update_user_topics(
+    topic_data: UserTopicsUpdate,
+    current_user: Current_User,
+    db: Db_Session,
+) -> None:
+
+    command = UpdateUserTopicsCommand(
+        SqlAlchemyUnitOfWork(db),
+    )
+    command.execute(
+        user_id=current_user.id,
+        topic_ids=topic_data.topic_ids,
     )
 
 @router.delete(

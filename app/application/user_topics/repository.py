@@ -14,6 +14,12 @@ class UserTopicRepository(Protocol):
     ) -> list[Topic]:
         ...
 
+    def list_user_topics(
+        self,
+        user_id: UUID,
+    ) -> list[UserTopic]:
+        ...
+
     def get_by_user_and_topic(
         self,
         user_id: UUID,
