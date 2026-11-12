@@ -5,6 +5,7 @@ from app.application.courses.views import (
     HomePageSectionView,
     MyCoursesView,
     AllCoursesView,
+    HomePageTopicView,
 )
 
 from app.models.course import Course
@@ -26,6 +27,7 @@ from app.schemas.course import (
 from app.schemas.home_page import (
     HomePageResponse,
     HomePageSectionResponse,
+    HomePageTopicResponse,
 )
 from app.schemas.topic import TopicResponse
 from app.schemas.tag import TagResponse
@@ -104,6 +106,18 @@ def to_course_catalog_filters_response(
         difficulties=filters.difficulties,
     )
 
+def to_home_page_topic_response(
+    view: HomePageTopicView,
+) -> HomePageTopicResponse:
+
+    return HomePageTopicResponse(
+        id=view.id,
+        parent_id=view.parent_id,
+        name=view.name,
+        slug=view.slug,
+        has_children=view.has_children,
+    )
+
 def to_home_page_response(
     sections: list[HomePageSectionView],
 ) -> HomePageResponse:
@@ -111,7 +125,9 @@ def to_home_page_response(
     return HomePageResponse(
         sections=[
             HomePageSectionResponse(
-                topic=section.topic,
+                topic=to_home_page_topic_response(
+                    section.topic
+                ),
                 courses=[
                     to_course_list_item_response(course)
                     for course in section.courses

@@ -14,6 +14,7 @@ class GetCoursesInput:
     search: str | None = None
     author_ids: list[UUID] | None = None
     topics: str | None = None
+    topic_id: UUID | None = None
     tags: str | None = None
     include_descendants: bool = False
     difficulties: list[CourseDifficulty] | None = None
@@ -47,6 +48,7 @@ class GetCoursesQuery:
             search=input.search,
             author_ids=input.author_ids,
             topic_ids=topic_ids,
+            topic_id=input.topic_id,
             include_descendants=input.include_descendants,
             difficulties=input.difficulties,
             tags_ids_by_category=tags_ids_by_category,

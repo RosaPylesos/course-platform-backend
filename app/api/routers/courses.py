@@ -106,13 +106,14 @@ def get_courses(
 )
 def get_course_catalog_filters(
     db: Db_Session,
+    topic_id: UUID | None = None,
 ) -> CourseCatalogFiltersResponse:
 
     query = GetCourseCatalogFiltersQuery(
         SqlAlchemyCourseRepository(db),
     )
 
-    result = query.execute()
+    result = query.execute(topic_id=topic_id)
     return to_course_catalog_filters_response(result)
 
 @router.get(

@@ -45,13 +45,17 @@ class CourseRepository(Protocol):
         search: str | None = None,
         author_id: UUID | None = None,
         topic_ids:list[UUID] | None = None,
+        topic_id: UUID | None = None,
         include_descendants: bool = False,
         difficulty: CourseDifficulty | None = None,
         tags_ids_by_category: dict[UUID, list[UUID]] | None = None,
     ) -> CourseListView:
         ...
 
-    def get_catalog_filters(self) -> CourseCatalogFiltersView:
+    def get_catalog_filters(
+        self,
+        topic_id: UUID | None = None,
+    ) -> CourseCatalogFiltersView:
         ...
 
     def list_by_author(

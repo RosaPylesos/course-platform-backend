@@ -1,12 +1,21 @@
+from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.course import CourseListItemResponse
-from app.schemas.topic import TopicResponse
+
+
+
+class HomePageTopicResponse(BaseModel):
+    id: UUID
+    parent_id: UUID | None
+    name: str
+    slug: str
+    has_children: bool
 
 
 
 class HomePageSectionResponse(BaseModel):
-    topic: TopicResponse
+    topic: HomePageTopicResponse
     courses: list[CourseListItemResponse]
 
     model_config = ConfigDict(from_attributes=True)

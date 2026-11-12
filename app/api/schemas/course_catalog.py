@@ -26,6 +26,7 @@ class CourseCatalogParams(BaseModel):
         default=None,
         max_length=500,
     )
+    topic_id: UUID | None = Field(default=None)
     tags: str | None = Field(
         default=None,
         max_length=500,

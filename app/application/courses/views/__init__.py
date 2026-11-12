@@ -8,3 +8,4 @@ from app.application.courses.views.home_page_section import HomePageSectionView
 from app.application.courses.views.my_courses_view import MyCoursesView
 from app.application.courses.views.course_list import CourseListView
 from app.application.courses.views.all_courses_view import AllCoursesView
+from app.application.courses.views.home_page_section import HomePageTopicView

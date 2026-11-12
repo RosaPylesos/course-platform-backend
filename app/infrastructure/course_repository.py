@@ -15,6 +15,7 @@ from app.application.courses.views import (
     HomePageSectionView,
     MyCoursesView,
     AllCoursesView,
+    HomePageTopicView,
 )
 
 from app.models.enums import (
@@ -96,11 +97,20 @@ class SqlAlchemyCourseRepository(CourseRepository):
             .subquery()
         )
 
+        child_topic = aliased(Topic)
+
+        has_children = exists(
+            select(child_topic.id).where(
+                child_topic.parent_id == Topic.id
+            )
+        )
+
         # Popular + Preferred Topics
         topic_statement = (
             select(
                 Topic,
                 topic_counts.c.course_count,
+                has_children.label("has_children"),
             )
             .join(
                 topic_counts,
@@ -141,7 +151,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
 
         # Course amount limitation per topic
         selected_topic_ids = [
-            topic.id for topic, _ in selected_topics
+            topic.id for topic, _, _ in selected_topics
         ]
 
         if not selected_topic_ids:
@@ -216,10 +226,16 @@ class SqlAlchemyCourseRepository(CourseRepository):
         # returns final list of HomePageSectionView
         return [
             HomePageSectionView(
-                topic=topic,
+                topic=HomePageTopicView(
+                    id=topic.id,
+                    parent_id=topic.parent_id,
+                    name=topic.name,
+                    slug=topic.slug,
+                    has_children=has_children,
+                ),
                 courses=courses_by_topic[topic.id],
             )
-            for topic, _ in selected_topics
+            for topic, _, has_children in selected_topics
             if courses_by_topic.get(topic.id)
         ]
 
@@ -230,12 +246,14 @@ class SqlAlchemyCourseRepository(CourseRepository):
         search: str | None = None,
         author_ids: list[UUID] | None = None,
         topic_ids: list[UUID] | None = None,
+        topic_id: UUID | None = None,
         include_descendants: bool = False,
         difficulties: list[CourseDifficulty] | None = None,
         tags_ids_by_category: dict[UUID, list[UUID]] | None = None,
     ) -> CourseListView:
 
         filters = [Course.status == CourseStatus.PUBLISHED]
+        print(topic_ids)
 
         ### SEARCH FILTER
         if search and search.strip():
@@ -254,11 +272,11 @@ class SqlAlchemyCourseRepository(CourseRepository):
         ### TOPIC FILTER
         selected_topic_ids = list(topic_ids or [])
 
-        if selected_topic_ids:
+        if topic_id is not None:
             if include_descendants:
                 topic_tree = (
                     select(Topic.id)
-                    .where(Topic.id.in_(selected_topic_ids))
+                    .where(Topic.id == topic_id)
                     .cte("topic_tree", recursive=True)
                 )
 
@@ -278,8 +296,13 @@ class SqlAlchemyCourseRepository(CourseRepository):
                 )
             else:
                 filters.append(
-                    Course.topic_id.in_(selected_topic_ids)
+                    Course.topic_id == topic_id
                 )
+
+        if selected_topic_ids:
+            filters.append(
+                Course.topic_id.in_(selected_topic_ids)
+            )
 
         ### TAGS FILTERING
         for category_id, tag_ids in (
@@ -349,15 +372,45 @@ class SqlAlchemyCourseRepository(CourseRepository):
             total_pages=(total + page_size - 1) // page_size,
         )
 
-    def get_catalog_filters(self) -> CourseCatalogFiltersView:
+    def get_catalog_filters(
+        self,
+        topic_id: UUID | None = None,
+    ) -> CourseCatalogFiltersView:
 
-        published_filter = Course.status == CourseStatus.PUBLISHED
+        filters = [Course.status == CourseStatus.PUBLISHED]
+
+        ### DESCENDANTS CONDITION
+
+        context_topic_tree = None
+
+        if topic_id is not None:
+            context_topic_tree = (
+                select(Topic.id.label("id"))
+                .where(Topic.id == topic_id)
+                .cte("context_topic_tree", recursive=True)
+            )
+
+            child_topic = aliased(Topic)
+
+            context_topic_tree = context_topic_tree.union_all(
+                select(child_topic.id.label("id"))
+                .join(
+                    context_topic_tree,
+                    child_topic.parent_id == context_topic_tree.c.id,
+                )
+            )
+
+            filters.append(
+                Course.topic_id.in_(
+                    select(context_topic_tree.c.id)
+                )
+            )
 
         ### AUTHORS FILTER
         authors_statement = (
             select(User)
             .join(Course, Course.author_id == User.id)
-            .where(published_filter)
+            .where(*filters)
             .distinct()
             .order_by(User.name, User.surname)
         )
@@ -374,7 +427,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
         ### DIFFICULTIES FILTER
         difficulties_statement = (
             select(Course.difficulty)
-            .where(published_filter)
+            .where(*filters)
             .distinct()
             .order_by(Course.difficulty)
         )
@@ -384,26 +437,38 @@ class SqlAlchemyCourseRepository(CourseRepository):
         )
 
         ### TOPICS FILTER
-        topic_tree = (
+        available_topic_tree = (
             select(Course.topic_id.label("id"))
-            .where(published_filter)
+            .where(*filters)
             .distinct()
-            .cte("topic_tree", recursive=True)
+            .cte("available_topic_tree", recursive=True)
         )
 
-        topic_tree = topic_tree.union(
+        available_topic_tree = available_topic_tree.union(
             select(Topic.parent_id.label("id"))
             .join(
-                topic_tree,
-                Topic.id == topic_tree.c.id,
+                available_topic_tree,
+                Topic.id == available_topic_tree.c.id,
             )
             .where(Topic.parent_id.is_not(None))
         )
 
         topics_statement = (
             select(Topic)
-            .where(Topic.id.in_(select(topic_tree.c.id)))
-            .order_by(Topic.name, Topic.id)
+            .where(Topic.id.in_(
+                select(available_topic_tree.c.id)
+                )
+            )
+        )
+
+        if topic_id is not None:
+            topics_statement = topics_statement.where(
+                Topic.id != topic_id
+            )
+
+        topics_statement = topics_statement.order_by(
+            Topic.name, 
+            Topic.id,
         )
 
         topics =[
@@ -421,7 +486,7 @@ class SqlAlchemyCourseRepository(CourseRepository):
             select(Tag)
             .join(CourseTag, CourseTag.tag_id == Tag.id)
             .join(Course, Course.id == CourseTag.course_id)
-            .where(Course.status == CourseStatus.PUBLISHED)
+            .where(*filters)
             .distinct()
             .order_by(Tag.name)
         )
