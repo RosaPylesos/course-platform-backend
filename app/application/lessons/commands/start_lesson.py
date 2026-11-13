@@ -51,22 +51,11 @@ class StartLessonCommand:
                 "You must be actively enrolled in this course"
             )
 
-        progress = self.uow.lesson_progress.get_by_enrollment_and_lesson(
-            enrollment_id=enrollment.id,
-            lesson_id=lesson_id,
-        )
-
-        if progress is not None:
-            return progress
-
-        progress = LessonProgress(
-            enrollment_id=enrollment.id,
-            lesson_id=lesson_id,
-            is_completed=False,
-        )
-
         try:
-            self.uow.lesson_progress.add(progress)
+            progress = self.uow.lesson_progress.get_or_create(
+                enrollment_id=enrollment.id,
+                lesson_id=lesson_id,
+            )
             self.uow.commit()
         except Exception:
             self.uow.rollback()

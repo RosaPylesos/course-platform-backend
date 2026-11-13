@@ -28,3 +28,10 @@ class LessonProgressRepository(Protocol):
 
     def add(self, progress: LessonProgress) -> None:
         ...
+
+    def get_or_create(
+        self,
+        enrollment_id: UUID,
+        lesson_id: UUID,
+    ) -> LessonProgress:
+        ...
