@@ -19,6 +19,17 @@ class SqlAlchemyTagCategoryRepository(TagCategoryRepository):
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def list_public(self) -> list[TagCategory]:
+
+        statement = (
+            select(TagCategory)
+            .order_by(TagCategory.name, TagCategory.id)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )
+
     def list_all_with_tags(self) -> list[PublicTagCategoryView]:
 
         statement = (

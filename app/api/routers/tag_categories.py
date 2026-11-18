@@ -6,6 +6,7 @@ from app.api.dependencies import Db_Session
 
 from app.application.tag_categories.queries import (
     GetTagCategoryQuery,
+    GetTagCategoriesTagsQuery,
     GetTagCategoriesQuery,
 )
 
@@ -31,6 +32,20 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 def get_tag_categories_with_tags(
+    db: Db_Session,
+) -> list[TagCategory]:
+
+    query = GetTagCategoriesTagsQuery(
+        SqlAlchemyTagCategoryRepository(db),
+    )
+    return query.execute()
+
+@router.get(
+    "/public/",
+    response_model=list[TagCategoryResponse],
+    status_code=status.HTTP_200_OK,
+)
+def get_tag_categories(
     db: Db_Session,
 ) -> list[TagCategory]:
 

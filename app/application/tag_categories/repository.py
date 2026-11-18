@@ -11,6 +11,9 @@ from app.models.tag_category import TagCategory
 
 
 class TagCategoryRepository(Protocol):
+
+    def list_public(self) -> list[TagCategory]:
+        ...
     
     def list_all_with_tags(self) -> list[PublicTagCategoryView]:
         ...
