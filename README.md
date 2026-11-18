@@ -19,6 +19,13 @@ to do so just write in terminal
 ```bash
 pip install -r requirements.txt
 ```
+also, for more information, this repo was made 
+by using:
+- **`Python 3.13.1`**
+- **`pip 26.2.2`**
+- **`PostgreSQL 18.6-4`**
+so be sure that everything above this list is either 
+the same version with your or above.
 
 To run the "Swagger" docs, you'll need to
 run the server via uvicorn module. Currently,
