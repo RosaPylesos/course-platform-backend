@@ -1,103 +1,129 @@
-# music-shop-backend
+# course-platform-backend
 
-This is Backend part for music shop coursework,
-made by using Python, FastAPI, Uvicorn, SqlAlchemy
-and Alembic (with many more dependencies of theirs).
-The Backend runs on FastAPI with PostgreSQL RDBMS.
+# О проекте
 
-# HOW TO RUN
+Это бэкенд-часть курсового проекта — платформы для онлайн-курсов.
+Проект разработан с использованием Python, FastAPI, Uvicorn, SQLAlchemy
+и Alembic (а также ряда других зависимостей).
+Бэкенд работает на базе FastAPI и реляционной СУБД PostgreSQL.
 
-First off, you need to switch your python on
-venv in this directory. You can make this by:
+# КАК ЗАПУСТИТЬ
+
+Прежде всего, необходимо активировать виртуальное окружение Python (venv)
+в данной директории. Сделать это можно командой:
 ```bash
-.venv\Scripts\Activate\ps1
+.venv\Scripts\Activate.ps1
 ```
 
-To run this thing you'll need to install the
-modules from **requirements.txt** via pip.
-to do so just write in terminal
+Для работы проекта нужно установить необходимые модули из файла **requirements.txt**
+с помощью pip. Для этого выполните в терминале:
 ```bash
 pip install -r requirements.txt
 ```
-also, for more information, this repo was made 
-by using:
+Кроме того, обратите внимание, что при создании проекта использовались следующие версии:
 - **`Python 3.13.1`**
 - **`pip 26.2.2`**
 - **`PostgreSQL 18.6-4`**
-so be sure that everything above this list is either 
-the same version with your or above.
+Убедитесь, что установленные у вас версии соответствуют указанным или являются более новыми.
 
-To run the "Swagger" docs, you'll need to
-run the server via uvicorn module. Currently,
-in our case we'll use this command:
+**ВАЖНО**: перед запуском удостоверьтесь, что у вас уже настроен `.env` файл. 
+Для правильной настройки воспользуйтесь [.env.example](.env.example), чтобы 
+проверить, какие параметры необходимо задать перед запуском.
+
+Чтобы открыть документацию Swagger, запустите сервер через модуль uvicorn.
+Используйте для этого следующую команду:
 ```bash
 uvicorn app.main:app --reload
 ```
-It will open up **localhost:8000**, so with
-"/docs" directory you can have access to FastAPI
-documentation.
+После запуска сервер будет доступен по адресу **localhost:8000**.
+Перейдя по пути `/docs`, вы получите доступ к документации FastAPI.
 
-# Migration Stuff
+# Миграции базы данных
 
-For now, it's the only command to run for migrating
-DB schema on terminal, by using Alembic:
+На данный момент для применения миграций схемы базы данных через Alembic
+используется следующая команда:
 ```bash
 alembic upgrade head
 ```
-This command will automatically upgrade your DB
-schema and add all of necessary tables to it for
-proper work. If you need to check your migration
-status, try using "current" command:
+Эта команда автоматически обновит схему базы данных и создаст все необходимые таблицы
+для корректной работы приложения. Чтобы проверить текущее состояние миграций,
+воспользуйтесь командой:
 ```bash
 alembic current
 ```
-It will show whether your migration is on head or
-not.
-
-If you need to check SQLAlchemy relationships, 
-you should probably use this command:
+Она покажет, находится ли база данных в актуальном состоянии (на последней версии миграции). Если вам нужно проверить связи (relationships) в SQLAlchemy,
+воспользуйтесь следующей командой:
 ```bash
 python -c "from sqlalchemy.orm import configure_mappers; from app.models import *; configure_mappers(); print('All model relationships configured successfully')"
 ```
 
-One more horrendously large command to check 
-DB dependency proper work is:
+**ВАЖНО**: Миграцию необходимо проводить, если у вас изначально нет данных БД и вы ставите все с чистого листа. 
+При наличии резервной копии БД миграцию проводить необязательно, а в случае модификации на стороне моделей - **не рекомендуется**.
+
+Еще одна довольно объемная команда для проверки
+корректности работы зависимостей базы данных:
 ```bash
 python -c "from app.database.connection import engine, SessionLocal; from app.api.dependencies import get_db; print('DB dependency imports successfully')"
 ```
 
-# Misc
-## Slugify strings
-There've been used a **slugify** Python library,
-if you want to test it's work, use this command:
+# Разное
+## Создание "слагов" (slugify)
+В проекте используется библиотека **slugify**.
+Чтобы проверить ее работу, выполните команду:
 ```bash
 python -c "from app.utils.slug import generate_slug; print(generate_slug('YOUR-STRING-TO-SLUG-HERE'))"
 ```
-## JWT Token generation
-Additionally, if you want to add/change JWT secret
-token to .env, you can use this command:
+## Генерация JWT-токена
+Если вам нужно добавить или изменить секретный ключ (secret key) для JWT
+в файле `.env`, воспользуйтесь этой командой:
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
-Paste it to .env as __JWT_SECRET_KEY="your key here"__
+Добавьте полученное значение в `.env` в формате: __JWT_SECRET_KEY="your key here"__
 
-## Seeding data via script.py
-If you have some data that fits with validation,
-(it needs to be in `.json` file format), you can
-you **seed script** in the `scripts` folder.
-for references - use `reference_data.json`, it 
-can come in handy in cases when your data is about 
-to be generated via LLM or AI Agents. That will help 
-them to choose only preferable **`authors`, `topics`,**
-**and `tags`**. Additionaly, there's an .md instruction for 
-proper generation of those - it contains rules and constraints 
-for required data to be generated.
-when you data will be ready - rename the file to `courses_data.json` 
-and use the terminal command down below:
+## Наполнение базы данных (seeding) через скрипт
+Если у вас есть данные, соответствующие правилам валидации
+(они должны быть представлены в формате `.json`),
+вы можете воспользоваться **скриптом для наполнения базы (seed script)**,
+находящимся в папке `scripts`.
+В качестве примера используйте [`reference_data.json`](./scripts/reference_data.json).
+Этот файл может пригодиться, если данные будут генерироваться
+с помощью LLM или ИИ-агентов: он поможет им выбирать
+только допустимые значения для полей **`authors` (авторы), `topics` (темы)**
+и **`tags` (теги)**. Кроме того, в проекте есть [инструкция](./scripts/AGENTS.md) в формате `.md`,
+содержащая правила и ограничения, которые необходимо учитывать
+при генерации таких данных. Когда данные будут готовы, переименуйте файл в `courses_data.json`
+и выполните в терминале следующую команду:
 ```bash
 python -m scripts.seed_courses
 ```
-It will start to read data from your file and validate it 
-with designed schemas for this operation. If there'll some 
-mistake in validation, or the data you provided will be empty 
-the script will notify you about this in your console window.
+Скрипт начнет считывать данные из вашего файла и проверять их
+на соответствие предусмотренным для этой операции схемам. Если в процессе проверки
+будут обнаружены ошибки или предоставленный файл окажется пустым,
+скрипт уведомит вас об этом в окне консоли.
+
+---
+# Вкратце о содержимом
+
+Ниже описана структура папок, и их ответственность, используемая в Backend,
+основная часть находится в папке [app](./app/):
+
+- **[api](./app/api/)** - Эндпоинты, мапперы, API-схемы некоторых запросов.
+- **[application](./app/application/)** - Обработчики, разделение по типу **`CQRS`**, 
+а также местами попадаются утилиты для обработки команд, исключения и абстракция репозиториев.
+- **[core](./app/core/)** - В нашем случае - хеширование паролей, токенизация.
+- **[database](./app/database/)** - Подключение к БД, создание БД-Сессии.
+- **[infrastructure](./app/infrastructure/)** - SQL-репозитории, перезапись 'application' 
+репозиториев.
+- **[models](./app/models/)** - SQLAlchemy Модели и типы, используемые в миграциях и в целом, 
+работе проекта
+- **[schemas](./app/schemas/)** - Pydantic-схемы и валидация данных.
+- **[utils](./app/utils/)** - Прочий функционал (пока что только функция слагов).
+
+**Прочие папки**:
+
+- **[alembic](./alembic/)** - Миграции Alembic, которые были проведены во время разработки.
+- **[scripts](./scripts/)** - Скрипты для автоматизации некоторых процессов, в нашем случае - 
+для заполнения данных в БД через `.json` файлы.
+- **[tests](./tests/)** - часть тестов, которые проводились во время разработки для проверки 
+функционала.
