@@ -1,0 +1,91 @@
+from uuid import UUID
+
+from app.application.exceptions import (
+    InvalidInputError,
+    ResourceNotFoundError,
+)
+from app.application.unit_of_work import UnitOfWork
+
+from app.models.topic import Topic
+
+from app.schemas.topic import TopicUpdate
+
+from app.utils.slug import generate_unique_slug
+
+
+
+class UpdateTopicCommand:
+    def __init__(self, uow: UnitOfWork) -> None:
+        self.uow = uow
+
+    def execute(
+        self,
+        topic_id: UUID,
+        topic_data: TopicUpdate,
+    ) -> Topic:
+        
+        topic = self.uow.topics.get_by_id(topic_id)
+
+        if topic is None:
+            raise ResourceNotFoundError("Topic not found")
+
+        update_data = topic_data.model_dump(exclude_unset=True)
+
+        if not update_data:
+            raise InvalidInputError("No fields to update")
+
+        if "parent_id" in update_data:
+            parent_id = update_data["parent_id"]
+
+            if parent_id is not None:
+                if parent_id == topic_id:
+                    raise InvalidInputError(
+                        "A topic cannot be its own parent"
+                    )
+
+                parent = self.uow.topics.get_by_id(parent_id)
+
+                if parent is None:
+                    raise ResourceNotFoundError(
+                    "Parent topic not found"
+                    )
+
+                ancestor = parent
+
+                while ancestor is not None:
+                    if ancestor.id == topic_id:
+                        raise InvalidInputError(
+                            "A topic cannot have one of its descendants as its parent"
+                        )
+
+                    if ancestor.parent_id is None:
+                        break
+
+                    ancestor = self.uow.topics.get_by_id(ancestor.parent_id)
+
+        if "name" in update_data:
+            new_name = update_data.pop("name")
+
+            if new_name is None:
+                raise InvalidInputError("Topic name cannot be null")
+
+            slug = generate_unique_slug(
+                new_name,
+                self.uow.topics.slug_exists,
+                exclude_id=topic_id,
+            )
+
+            topic.name = new_name
+            topic.slug = slug
+
+        for field, value in update_data.items():
+            setattr(topic, field, value)
+
+        try:
+            self.uow.commit()
+            self.uow.refresh(topic)
+        except Exception:
+            self.uow.rollback()
+            raise
+
+        return topic

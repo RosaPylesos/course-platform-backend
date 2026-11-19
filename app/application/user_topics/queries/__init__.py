@@ -1,0 +1,1 @@
+from app.application.user_topics.queries.get_user_topics import GetUserTopicsQuery

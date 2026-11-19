@@ -1,0 +1,3 @@
+from app.application.user_topics.commands.add_user_topic import AddUserTopicCommand
+from app.application.user_topics.commands.remove_user_topic import RemoveUserTopicCommand
+from app.application.user_topics.commands.update_user_topics import UpdateUserTopicsCommand

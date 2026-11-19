@@ -1,0 +1,388 @@
+{
+"authors": [
+    {
+      "name": "Septik",
+      "surname": null,
+      "email": "septik@mail.com"
+    },
+    {
+      "name": "Датология",
+      "surname": null,
+      "email": "datology@mail.com"
+    },
+    {
+      "name": "Пандекс",
+      "surname": "Яктикум",
+      "email": "yaktikum@pandex.ru"
+    },
+    {
+      "name": "Соман",
+      "surname": "Ракутин",
+      "email": "s.rakutin@mail.ru"
+    },
+    {
+      "name": "Bill",
+      "surname": "Skox",
+      "email": "billskox@skill.box"
+    },
+    {
+      "name": "Beek",
+      "surname": "Grains",
+      "email": "beekgrains@gb.com"
+    },
+    {
+      "name": "Fill",
+      "surname": "Skactory",
+      "email": "fillskactory@sf.com"
+    }
+],
+"topics": [
+	  {
+		"name": "Web-Разработка",
+		"slug": "web-razrabotka",
+		"children": [
+		  {
+			"name": "Backend-Разработка",
+			"slug": "backend-razrabotka",
+			"children": []
+		  },
+		  {
+			"name": "Frontend-Разработка",
+			"slug": "frontend-razrabotka",
+			"children": []
+		  },
+		  {
+			"name": "HTML и CSS",
+			"slug": "html-i-css",
+			"children": []
+		  },
+		  {
+			"name": "Node.js",
+			"slug": "node-js",
+			"children": []
+		  },
+		  {
+			"name": "React",
+			"slug": "react",
+			"children": []
+		  }
+		]
+	  },
+	  {
+		"name": "Дизайн и компьютерная графика",
+		"slug": "dizain-i-kompiuternaia-grafika",
+		"children": [
+		  {
+			"name": "3D-Моделирование",
+			"slug": "3d-modelirovanie",
+			"children": []
+		  },
+		  {
+			"name": "Adobe Photoshop",
+			"slug": "adobe-photoshop",
+			"children": []
+		  },
+		  {
+			"name": "Figma",
+			"slug": "figma",
+			"children": []
+		  },
+		  {
+			"name": "UI/UX-Дизайн",
+			"slug": "ui-ux-dizain",
+			"children": []
+		  },
+		  {
+			"name": "Web-Дизайн",
+			"slug": "web-dizain",
+			"children": []
+		  }
+		]
+	  },
+	  {
+		"name": "Другое",
+		"slug": "drugoe",
+		"children": [
+		  {
+			"name": "Кибербезопасность",
+			"slug": "kiberbezopasnost",
+			"children": []
+		  },
+		  {
+			"name": "Разработка игр",
+			"slug": "razrabotka-igr",
+			"children": []
+		  },
+		  {
+			"name": "Тестирование ПО",
+			"slug": "testirovanie-po",
+			"children": []
+		  },
+		  {
+			"name": "Управление IT-проектами",
+			"slug": "upravlenie-it-proektami",
+			"children": []
+		  }
+		]
+	  },
+	  {
+		"name": "Мобильная разработка",
+		"slug": "mobilnaia-razrabotka",
+		"children": [
+		  {
+			"name": "Android-Разработка",
+			"slug": "android-razrabotka",
+			"children": []
+		  },
+		  {
+			"name": "Flutter",
+			"slug": "flutter",
+			"children": []
+		  },
+		  {
+			"name": "iOS-Разработка",
+			"slug": "ios-razrabotka",
+			"children": []
+		  }
+		]
+	  },
+	  {
+		"name": "Программирование",
+		"slug": "programmirovanie",
+		"children": [
+		  {
+			"name": "C#",
+			"slug": "csharp",
+			"children": []
+		  },
+		  {
+			"name": "C++",
+			"slug": "cpp",
+			"children": []
+		  },
+		  {
+			"name": "Java",
+			"slug": "java",
+			"children": []
+		  },
+		  {
+			"name": "JavaScript",
+			"slug": "javascript",
+			"children": []
+		  },
+		  {
+			"name": "PHP",
+			"slug": "php",
+			"children": []
+		  },
+		  {
+			"name": "Python",
+			"slug": "python",
+			"children": []
+		  }
+		]
+	  },
+	  {
+		"name": "Работа с данными",
+		"slug": "rabota-s-dannymi",
+		"children": [
+		  {
+			"name": "Data Science",
+			"slug": "data-science",
+			"children": []
+		  },
+		  {
+			"name": "SQL",
+			"slug": "sql",
+			"children": []
+		  },
+		  {
+			"name": "Анализ данных",
+			"slug": "analiz-dannykh",
+			"children": []
+		  },
+		  {
+			"name": "Базы данных",
+			"slug": "bazy-dannykh",
+			"children": []
+		  },
+		  {
+			"name": "Машинное обучение",
+			"slug": "mashinnoe-obuchenie",
+			"children": []
+		  }
+		]
+	  },
+		{
+		"name": "Системное администрирование и DevOps",
+		"slug": "sistemnoe-administrirovanie-i-devops",
+		"children": [
+			  {
+				"name": "CI/CD",
+				"slug": "ci-cd",
+				"children": []
+			  },
+			  {
+				"name": "Docker",
+				"slug": "docker",
+				"children": []
+			  },
+			  {
+				"name": "Kubernetes",
+				"slug": "kubernetes",
+				"children": []
+			  },
+			  {
+				"name": "Linux",
+				"slug": "linux",
+				"children": []
+			  },
+			  {
+				"name": "Облачные технологии",
+				"slug": "oblachnye-tekhnologii",
+				"children": []
+			  }
+			]
+		}
+],
+"tag_categories": [
+  {
+    "name": "Платформы и среды",
+	"slug": "platformy-i-sredy",
+    "tags": [
+      {
+        "name": "Android",
+        "slug": "android"
+      },
+      {
+        "name": "Linux",
+        "slug": "linux"
+      },
+      {
+        "name": "Web",
+        "slug": "web"
+      },
+      {
+        "name": "Windows",
+        "slug": "windows"
+      },
+      {
+        "name": "iOS",
+        "slug": "ios"
+      },
+      {
+        "name": "Облачные платформы",
+        "slug": "oblachnye-platformy"
+      }
+    ]
+  },
+  {
+    "name": "Технологии и инструменты",
+	"slug": "tekhnologii-i-instrumenty",
+    "tags": [
+      {
+        "name": "Adobe Photoshop",
+        "slug": "adobe-photoshop"
+      },
+      {
+        "name": "Android Studio",
+        "slug": "android-studio"
+      },
+      {
+        "name": "Blender",
+        "slug": "blender"
+      },
+      {
+        "name": "C#",
+        "slug": "csharp"
+      },
+      {
+        "name": "C++",
+        "slug": "cpp"
+      },
+      {
+        "name": "Docker",
+        "slug": "docker"
+      },
+      {
+        "name": "Figma",
+        "slug": "figma"
+      },
+      {
+        "name": "Flutter",
+        "slug": "flutter"
+      },
+      {
+        "name": "Git",
+        "slug": "git"
+      },
+      {
+        "name": "Java",
+        "slug": "java"
+      },
+      {
+        "name": "JavaScript",
+        "slug": "javascript"
+      },
+      {
+        "name": "Mongo DB",
+        "slug": "mongo-db"
+      },
+      {
+        "name": "Node.js",
+        "slug": "node-js"
+      },
+      {
+        "name": "PostgreSQL",
+        "slug": "postgresql"
+      },
+      {
+        "name": "Python",
+        "slug": "python"
+      },
+      {
+        "name": "React",
+        "slug": "react"
+      },
+      {
+        "name": "SQL",
+        "slug": "sql"
+      },
+      {
+        "name": "TypeScript",
+        "slug": "typescript"
+      },
+      {
+        "name": "Unity",
+        "slug": "unity"
+      },
+      {
+        "name": "Unreal Engine",
+        "slug": "unreal-engine"
+      },
+      {
+        "name": "XCode",
+        "slug": "xcode"
+      }
+    ]
+  },
+  {
+    "name": "Язык",
+	"slug": "iazyk",
+    "tags": [
+      {
+        "name": "Английский",
+        "slug": "angliiskii"
+      },
+      {
+        "name": "Казахский",
+        "slug": "kazakhskii"
+      },
+      {
+        "name": "Русский",
+        "slug": "russkii"
+      }
+    ]
+  }
+]
+}
