@@ -9,7 +9,7 @@ class LessonProgressItem(BaseModel):
     lesson_id: UUID
     lesson_name: str
     position: int
-    description: str
+    description: str | None
     is_started: bool
     is_completed: bool
 
